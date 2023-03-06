@@ -22,9 +22,22 @@ To build PLADE, you need [CMake](https://cmake.org/download/) (`>= 3.23`) and, o
 
 
 ### Compliling on Linux  
-* Run these commands to install dependencies:
-           sudo apt-get update
+* Run these commands to install dependencies first:
 
+           sudo apt-get update
+           sudo apt-get install git build-essential linux-libc-dev -y
+           sudo apt-get install cmake -y
+           sudo apt-get install libusb-1.0-0-dev libusb-dev libudev-dev -y
+           sudo apt-get install mpi-default-dev openmpi-bin openmpi-common -y
+           sudo apt-get install libflann1.9 libflann-dev -y
+           sudo apt-get install libeigen3-dev -y
+           sudo apt-get install libboost-all-dev -y
+           sudo apt-get install libvtk7.1p-qt libvtk7.1p libvtk7-qt-dev -y #建议编译vtk8.2
+           sudo apt-get install libqhull* libgtest-dev -y
+           sudo apt-get install freeglut3-dev pkg-config -y
+           sudo apt-get install libxmu-dev libxi-dev -y
+           sudo apt-get install mono-complete -y
+           sudo apt-get install openjdk-8-jdk openjdk-8-jre -y 
 
 ## Results
 
