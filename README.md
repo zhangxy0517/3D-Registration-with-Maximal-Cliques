@@ -23,6 +23,7 @@ To build PLADE, you need [CMake](https://cmake.org/download/) (`>= 3.23`) and, o
 
 ### Compliling on Linux  
 * Run these commands to install dependencies:
+           sudo apt-get update
 
 
 ## Results
