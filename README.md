@@ -3,7 +3,7 @@ Source code of CVPR 2023 paper
 
 ## Introduction  
 
-![](figures/pipeline.pdf)
+![](figures/pipeline.png)
 
 ## Requirements
 
