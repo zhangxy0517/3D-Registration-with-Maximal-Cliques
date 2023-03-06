@@ -22,6 +22,7 @@ To build PLADE, you need [CMake](https://cmake.org/download/) (`>= 3.23`) and, o
 
 
 ### Compliling on Linux  
+1.Install PCL
 * Run these commands to install dependencies first:
 
            sudo apt-get update
@@ -40,7 +41,10 @@ To build PLADE, you need [CMake](https://cmake.org/download/) (`>= 3.23`) and, o
            sudo apt-get install openjdk-8-jdk openjdk-8-jre -y
            
 * Then visit [PCL Docs](https://pcl.readthedocs.io/projects/tutorials/en/latest/compiling_pcl_posix.html) to build and install PCL.
+2. Install igraph
 * Tutorials of install igraph can be found at [igraph Reference Manual](https://igraph.org/c/doc/igraph-Installation.html).
+3. Build MAC
+
 ## Results
 
 ## Citation
