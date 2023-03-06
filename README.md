@@ -32,13 +32,15 @@ To build PLADE, you need [CMake](https://cmake.org/download/) (`>= 3.23`) and, o
            sudo apt-get install libflann1.9 libflann-dev -y
            sudo apt-get install libeigen3-dev -y
            sudo apt-get install libboost-all-dev -y
-           sudo apt-get install libvtk7.1p-qt libvtk7.1p libvtk7-qt-dev -y #建议编译vtk8.2
+           sudo apt-get install libvtk7.1p-qt libvtk7.1p libvtk7-qt-dev -y
            sudo apt-get install libqhull* libgtest-dev -y
            sudo apt-get install freeglut3-dev pkg-config -y
            sudo apt-get install libxmu-dev libxi-dev -y
            sudo apt-get install mono-complete -y
-           sudo apt-get install openjdk-8-jdk openjdk-8-jre -y 
-
+           sudo apt-get install openjdk-8-jdk openjdk-8-jre -y
+           
+* Then visit [PCL Docs](https://pcl.readthedocs.io/projects/tutorials/en/latest/compiling_pcl_posix.html) to build and install PCL.
+ 
 ## Results
 
 ## Citation
