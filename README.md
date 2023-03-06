@@ -40,7 +40,7 @@ To build PLADE, you need [CMake](https://cmake.org/download/) (`>= 3.23`) and, o
            sudo apt-get install openjdk-8-jdk openjdk-8-jre -y
            
 * Then visit [PCL Docs](https://pcl.readthedocs.io/projects/tutorials/en/latest/compiling_pcl_posix.html) to build and install PCL.
- 
+* Tutorials of install igraph can be found at [igraph Reference Manual](https://igraph.org/c/doc/igraph-Installation.html).
 ## Results
 
 ## Citation
