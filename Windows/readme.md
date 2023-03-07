@@ -1,5 +1,5 @@
 # Compiling on Windows
-Before comiling, please make sure that the environment variables of PCL and igraph have been correctly added to the system.
+Before comiling, please make sure that the environment variables of `PCL` and `igraph` have been correctly added to the system.
 
 - Option 1 (purely on the command line): Use `nmake`(on Windows with Microsoft Visual Studio).
   - On Windows with Microsoft Visual Studio, use the `x64 Native Tools Command Prompt for VS XXXX` (**don't** use the x86 one), then
