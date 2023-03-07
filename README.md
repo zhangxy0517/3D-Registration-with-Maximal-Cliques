@@ -8,8 +8,10 @@ Source code of CVPR 2023 paper
 ## Repository layout  
 The repository contains a `CMakeLists.txt` file (in the root directory of the repository) that serves as an anchor for  
 configuring and building programs, and a set of subfolders:  
-* [`code`](https://github.com/chsl/PLADE/tree/master/code) - source code of PLADE implementation.  
-* [`sample_data`](https://github.com/chsl/PLADE/tree/master/sample_data) - two pairs of test point clouds.  
+* [`Linux`](https://github.com/zhangxy0517/3D-Registration-with-Maximal-Cliques/tree/main/Linux) - source code for Linux platform.  
+* [`Windows`](https://github.com/zhangxy0517/3D-Registration-with-Maximal-Cliques/tree/main/Windows) - source code for Windows platform.
+* [`demo`](https://github.com/zhangxy0517/3D-Registration-with-Maximal-Cliques/tree/main/demo) - test point clouds.
+* [`LoInlierRatio`](https://github.com/zhangxy0517/3D-Registration-with-Maximal-Cliques/tree/main/LoInlierRatio) - Download links for LoInlierRatio dataset.
   
 The core registration function is defined in [plade.h](./code/PLADE/plade.h).
 
