@@ -24,7 +24,7 @@
 - Option 1 (purely on the command line): Use CMake to generate Makefiles and then `make`.
     - You can simply run
       ```
-      $ cd path-to-root-dir-of-PLADE
+      $ cd path-to-root-dir-of-MAC
       $ mkdir Release
       $ cd Release
       $ cmake -DCMAKE_BUILD_TYPE=Release ..
