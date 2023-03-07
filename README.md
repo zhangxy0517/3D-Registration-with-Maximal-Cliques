@@ -36,6 +36,8 @@ Please refer to [Compiling on Linux](https://github.com/zhangxy0517/3D-Registrat
 
 ### KITTI
 
+### ETH
+
 ### LoInlierRatio dataset
 Download links can be found in [LoInlierRatio](https://github.com/zhangxy0517/3D-Registration-with-Maximal-Cliques/blob/main/LoInlierRatio/readme.md).
 
