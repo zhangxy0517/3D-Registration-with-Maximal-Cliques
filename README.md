@@ -6,14 +6,12 @@ Source code of CVPR 2023 paper
 ![](figures/pipeline.png)
 
 ## Repository layout  
-The repository contains a `CMakeLists.txt` file (in the root directory of the repository) that serves as an anchor for  
-configuring and building programs, and a set of subfolders:  
+The repository contains a set of subfolders:  
 * [`Linux`](https://github.com/zhangxy0517/3D-Registration-with-Maximal-Cliques/tree/main/Linux) - source code for Linux platform.  
 * [`Windows`](https://github.com/zhangxy0517/3D-Registration-with-Maximal-Cliques/tree/main/Windows) - source code for Windows platform.
 * [`demo`](https://github.com/zhangxy0517/3D-Registration-with-Maximal-Cliques/tree/main/demo) - test point clouds.
 * [`LoInlierRatio`](https://github.com/zhangxy0517/3D-Registration-with-Maximal-Cliques/tree/main/LoInlierRatio) - Download links for LoInlierRatio dataset.
-  
-The core registration function is defined in [plade.h](./code/PLADE/plade.h).
+
 
 ## Build
 MAC depends on [PCL](https://github.com/PointCloudLibrary/pcl/tags) (`>= 1.10.1`) and [igraph](https://github.com/igraph/igraph/tags)(`=0.9.9`). Please install these libraries first.
