@@ -4,7 +4,7 @@ Before comiling, please make sure that the environment variables of `PCL` and `i
 - Option 1 (purely on the command line): Use `nmake`(on Windows with Microsoft Visual Studio).
   - On Windows with Microsoft Visual Studio, use the `x64 Native Tools Command Prompt for VS XXXX` (**don't** use the x86 one), then
       ```
-      $ cd path-to-root-dir-of-PLADE
+      $ cd path-to-root-dir-of-MAC
       $ mkdir Release
       $ cd Release
       $ cmake -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release ..
