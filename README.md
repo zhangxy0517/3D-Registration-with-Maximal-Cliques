@@ -24,6 +24,11 @@ Please refer to [Compiling on Windows](https://github.com/zhangxy0517/3D-Registr
 ### Linux version
 Please refer to [Compiling on Linux](https://github.com/zhangxy0517/3D-Registration-with-Maximal-Cliques/blob/main/Linux/readme.md) for details.
 
+## Usages
+### Usage 1: register a 'source' point cloud to a 'target' point cloud.
+
+### Usage 2: register a bunch of point cloud pairs in a batch mode.
+
 ## Datasets
 ### U3M
 
