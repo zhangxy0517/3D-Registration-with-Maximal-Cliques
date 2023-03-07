@@ -21,3 +21,13 @@
 ## 2. Install igraph
 * Tutorials of install igraph can be found at [igraph Reference Manual](https://igraph.org/c/doc/igraph-Installation.html).
 ## 3. Build MAC
+- Option 1 (purely on the command line): Use CMake to generate Makefiles and then `make`.
+    - You can simply run
+      ```
+      $ cd path-to-root-dir-of-PLADE
+      $ mkdir Release
+      $ cd Release
+      $ cmake -DCMAKE_BUILD_TYPE=Release ..
+      $ make
+      ```
+- Option 2: Use any IDE that can directly handle CMakeLists files to open the `CMakeLists.txt` in the **root** directory of MAC. Then you should have obtained a usable project and just build it. I recommend using [CLion](https://www.jetbrains.com/clion/). 
