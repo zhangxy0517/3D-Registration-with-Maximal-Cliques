@@ -227,7 +227,7 @@ int main(int argc, char** argv) {
             {NULL, 0, 0, '\0'}
     };
 
-    while((opt = getopt_long(argc, argv, "o:i:n:d:s:l::a::h::m::", long_options, &option_index)) != -1){
+    while((opt = getopt_long(argc, argv, "", long_options, &option_index)) != -1){
         switch (opt) {
             case 'h':
                 usage();
@@ -261,6 +261,11 @@ int main(int argc, char** argv) {
                 usage();
                 exit(-1);
         }
+    }
+    if(argc  < 11){
+        cout << 11 - argc <<" more args are required." << endl;
+        usage();
+        exit(-1);
     }
 //    if (argc != 6)
 //	{
