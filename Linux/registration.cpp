@@ -816,7 +816,7 @@ bool registration(string name, string src_pointcloud, string des_pointcloud, str
 				Group.push_back(C);
 				selected_index.push_back(VECTOR(*v)[j]);
 			}
-            igraph_vector_destroy(v);
+            
 			Eigen::Matrix4d est_trans;
 			//团结构评分
 			double score = evaluation_trans(Group, correspondence, src_corr_pts, des_corr_pts, weight_thresh, est_trans, inlier_thresh, metric,raw_des_resolution);
