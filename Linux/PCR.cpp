@@ -705,14 +705,14 @@ void find_largest_clique_of_node(Eigen::MatrixXf& Graph, igraph_vector_ptr_t* cl
 		remain = after_decline;
         clique_score.clear();
 	}
-	for (int i = 0; i < remain.size(); i++)
-	{
-		igraph_vector_t* v = (igraph_vector_t*)VECTOR(*cliques)[remain[i]];
-		for (int j = 0; j < igraph_vector_size(v); j++)
-		{
-			correspondence[VECTOR(*v)[j]].inlier_weight++;
-		}
-	}
+//	for (int i = 0; i < remain.size(); i++)
+//	{
+//		igraph_vector_t* v = (igraph_vector_t*)VECTOR(*cliques)[remain[i]];
+//		for (int j = 0; j < igraph_vector_size(v); j++)
+//		{
+//			correspondence[VECTOR(*v)[j]].inlier_weight++;
+//		}
+//	}
     delete[] vis;
 	return;
 }
