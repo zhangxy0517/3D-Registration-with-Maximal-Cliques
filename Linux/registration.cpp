@@ -28,7 +28,7 @@ bool registration(string name, string src_pointcloud, string des_pointcloud, str
 	bool GT_cmp_mode = false;
 	int max_est_num = INT_MAX;
 	bool ransc_original = false;
-	string metric = "inlier";
+	string metric = "MAE";
 
 	success_num = 0;
 	if (access(folderPath.c_str(), 0))
@@ -221,44 +221,44 @@ bool registration(string name, string src_pointcloud, string des_pointcloud, str
 				float resolution_des = MeshResolution_mr_compute(cloud_des);
 				resolution = (resolution_des + resolution_src) / 2;
 
-				pcl::NormalEstimation<pcl::PointXYZ, pcl::Normal> n_src, n_des;//法向量估计对象
-				n_src.setInputCloud(cloud_src);
-				n_des.setInputCloud(cloud_des);
-				pcl::search::KdTree<pcl::PointXYZ>::Ptr tree_src(new pcl::search::KdTree<pcl::PointXYZ>);//创建空的kdtree
-				pcl::search::KdTree<pcl::PointXYZ>::Ptr tree_des(new pcl::search::KdTree<pcl::PointXYZ>);
-				n_src.setSearchMethod(tree_src);
-				n_src.setKSearch(20);
-				n_src.compute(*normal_src);
-				n_des.setSearchMethod(tree_des);
-				n_des.setKSearch(20);
-				n_des.compute(*normal_des);
-				pcl::KdTreeFLANN<pcl::PointXYZ> kdtree_src, kdtree_des;
-				kdtree_src.setInputCloud(cloud_src);
-				kdtree_des.setInputCloud(cloud_des);
-				vector<int>src_ind(1), des_ind(1);
-				vector<float>src_dis(1), des_dis(1);
+//				pcl::NormalEstimationOMP<pcl::PointXYZ, pcl::Normal> n_src, n_des;//法向量估计对象
+//				n_src.setInputCloud(cloud_src);
+//				n_des.setInputCloud(cloud_des);
+//				pcl::search::KdTree<pcl::PointXYZ>::Ptr tree_src(new pcl::search::KdTree<pcl::PointXYZ>);//创建空的kdtree
+//				pcl::search::KdTree<pcl::PointXYZ>::Ptr tree_des(new pcl::search::KdTree<pcl::PointXYZ>);
+//				n_src.setSearchMethod(tree_src);
+//				n_src.setKSearch(20);
+//				n_src.compute(*normal_src);
+//				n_des.setSearchMethod(tree_des);
+//				n_des.setKSearch(20);
+//				n_des.compute(*normal_des);
+//				pcl::KdTreeFLANN<pcl::PointXYZ> kdtree_src, kdtree_des;
+//				kdtree_src.setInputCloud(cloud_src);
+//				kdtree_des.setInputCloud(cloud_des);
+//				vector<int>src_ind(1), des_ind(1);
+//				vector<float>src_dis(1), des_dis(1);
 				while (!feof(corr))
 				{
 					Corre_3DMatch t;
 					pcl::PointXYZ src, des;
 					fscanf(corr, "%f %f %f %f %f %f\n", &src.x, &src.y, &src.z, &des.x, &des.y, &des.z);
 					// 寻找法向量
-					kdtree_src.nearestKSearch(src, 1, src_ind, src_dis);
-					kdtree_des.nearestKSearch(des, 1, des_ind, des_dis);
-					Eigen::Vector3f src_vector(normal_src->points[src_ind[0]].data_n[0], normal_src->points[src_ind[0]].data_n[1], normal_src->points[src_ind[0]].data_n[2]);
-					Eigen::Vector3f des_vector(normal_des->points[des_ind[0]].data_n[0], normal_des->points[des_ind[0]].data_n[1], normal_des->points[des_ind[0]].data_n[2]);
+					//kdtree_src.nearestKSearch(src, 1, src_ind, src_dis);
+					//kdtree_des.nearestKSearch(des, 1, des_ind, des_dis);
+					//Eigen::Vector3f src_vector(normal_src->points[src_ind[0]].data_n[0], normal_src->points[src_ind[0]].data_n[1], normal_src->points[src_ind[0]].data_n[2]);
+					//Eigen::Vector3f des_vector(normal_des->points[des_ind[0]].data_n[0], normal_des->points[des_ind[0]].data_n[1], normal_des->points[des_ind[0]].data_n[2]);
 					t.src = src;
 					t.des = des;
-					t.src_index = src_ind[0];
-					t.des_index = des_ind[0];
-					t.src_norm = src_vector;
-					t.des_norm = des_vector;
+					//t.src_index = src_ind[0];
+					//t.des_index = des_ind[0];
+					//t.src_norm = src_vector;
+					//t.des_norm = des_vector;
 					t.inlier_weight = 0;
 					correspondence.push_back(t);
 				}
 				fclose(corr);
-				src_ind.clear(); des_ind.clear();
-				src_dis.clear(); des_dis.clear();
+				//src_ind.clear(); des_ind.clear();
+				//src_dis.clear(); des_dis.clear();
 			}
 			else {
 				int idx = 0;
@@ -816,7 +816,7 @@ bool registration(string name, string src_pointcloud, string des_pointcloud, str
 				Group.push_back(C);
 				selected_index.push_back(VECTOR(*v)[j]);
 			}
-            
+            //igraph_vector_destroy(v);
 			Eigen::Matrix4d est_trans;
 			//团结构评分
 			double score = evaluation_trans(Group, correspondence, src_corr_pts, des_corr_pts, weight_thresh, est_trans, inlier_thresh, metric,raw_des_resolution);
