@@ -1,7 +1,7 @@
 //MKL boost
 //#define EIGEN_USE_MKL_ALL
 //#define EIGEN_VACTORIZE_SSE4_2
-#include <stdio.h>
+#include <cstdio>
 #include <vector>
 #include <time.h>
 #include <algorithm>
@@ -12,24 +12,22 @@
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/common/centroid.h>
 #include <pcl/common/eigen.h>
-#include <math.h>
+#include <cmath>
 #include "Eva.h"
 #include "omp.h"
 //#include<mkl.h>
 #include <unsupported/Eigen/MatrixFunctions>
 using namespace Eigen;
-extern bool add_overlap;
-extern bool low_inlieratio;
 
-bool compare_vote_score(const Vote v1, const Vote v2) {
+bool compare_vote_score(const Vote& v1, const Vote& v2) {
 	return v1.score > v2.score;
 }
 
-bool compare_vote_degree(const Vote_exp v1, const Vote_exp v2) {
+bool compare_vote_degree(const Vote_exp& v1, const Vote_exp& v2) {
 	return v1.degree > v2.degree;
 }
 
-bool compare_corres_score(const Corre_3DMatch c1, const Corre_3DMatch c2) {
+bool compare_corres_score(const Corre_3DMatch& c1, const Corre_3DMatch& c2) {
 	return c1.score > c2.score;
 }
 
@@ -76,7 +74,7 @@ float wasserstein_dis(Corre_3DMatch& c1, Corre_3DMatch &c2)
 	return dis;
 }
 
-Eigen::MatrixXf Graph_construction(vector<Corre_3DMatch>& correspondence, float resolution, bool sc2, string name, string descriptor) {
+Eigen::MatrixXf Graph_construction(vector<Corre_3DMatch>& correspondence, float resolution, bool sc2, const string &name, const string &descriptor) {
 	int size = correspondence.size();
 	Eigen::MatrixXf cmp_score; //为了计算性能考虑使用float
 	cmp_score.resize(size, size);
@@ -85,6 +83,7 @@ Eigen::MatrixXf Graph_construction(vector<Corre_3DMatch>& correspondence, float 
 	float score, src_dis, des_dis, dis, alpha_dis;
 	if (name == "KITTI")
 	{
+        float thresh = descriptor == "fpfh" ? 0.9 : 0.999;
 		for (int i = 0; i < size; i++)
 		{
 			c1 = correspondence[i];
@@ -96,7 +95,7 @@ Eigen::MatrixXf Graph_construction(vector<Corre_3DMatch>& correspondence, float 
 				dis = abs(src_dis - des_dis);
 				score = 1 - (dis * dis) / (0.6 * 0.6);
 				//score = exp(-dis * dis);
-				score = (score < 0.999) ? 0 : score;//fcgf 0.9999 fpfh 0.9
+				score = (score < thresh) ? 0 : score;//fcgf 0.9999 fpfh 0.9
 				cmp_score(i, j) = score;
 				cmp_score(j, i) = score;
 
@@ -120,7 +119,7 @@ Eigen::MatrixXf Graph_construction(vector<Corre_3DMatch>& correspondence, float 
 					score = 1 - (dis * dis) / (0.1 * 0.1);
 					if (add_overlap || low_inlieratio) // 0228
 					{
-                        score = (score < 0.99) ? 0 : score; //fpfh/fcgf overlap
+                        score = (score < 0.995) ? 0 : score; //fpfh/fcgf overlap 0.99
 //                        else {
 //                            alpha_dis = 10 * resolution;
 //                            score = exp(-dis * dis / (2 * alpha_dis * alpha_dis));
@@ -132,6 +131,8 @@ Eigen::MatrixXf Graph_construction(vector<Corre_3DMatch>& correspondence, float 
 						//	//score = wasserstein_tmp > 0 ? (score + wasserstein_tmp) : 0;
 						//	score += wasserstein_tmp;
 						//}
+// mac-op 250 500 1000 2500 5000
+//        0.9 0.95 0.99 0.995 0.999
 					}
 					else {
 						score = (score < 0.999) ? 0 : score;
@@ -258,7 +259,7 @@ bool evaluation_est(Eigen::Matrix4d est, Eigen::Matrix4d gt, double re_thresh, d
 void sort_row(MatD& matrix, MatD& sorted_matrix, Eigen::MatrixXi& index) {
 	sorted_matrix.resize(matrix.rows(), matrix.cols());
 	index.resize(matrix.rows(), matrix.cols());
-	for (size_t n = 0; n < matrix.rows(); n++)
+	for (int n = 0; n < matrix.rows(); n++)
 	{
 		VectorXi row_index = VectorXi::LinSpaced(matrix.cols(), 0, matrix.cols() - 1);
 		VectorXd row_data = matrix.row(n);
@@ -267,7 +268,7 @@ void sort_row(MatD& matrix, MatD& sorted_matrix, Eigen::MatrixXi& index) {
 		};
 		sort(row_index.data(), row_index.data() + row_index.size(), rule);
 
-		for (size_t i = 0; i < row_data.size(); i++)
+		for (int i = 0; i < row_data.size(); i++)
 		{
 			sorted_matrix(n, i) = row_data(row_index(i));
 		}
@@ -330,10 +331,10 @@ void weight_SVD(PointCloudPtr& src_pts, PointCloudPtr& des_pts, Eigen::VectorXd&
 	trans_Mat = Trans;
 }
 
-void post_refinement(vector<Corre_3DMatch>&correspondence, PointCloudPtr& src_corr_pts, PointCloudPtr& des_corr_pts, Eigen::Matrix4d& initial/* 由最大团生成的变换 */, double& best_score, double inlier_thresh, int iterations, string metric) {
+void post_refinement(vector<Corre_3DMatch>&correspondence, PointCloudPtr& src_corr_pts, PointCloudPtr& des_corr_pts, Eigen::Matrix4d& initial/* 由最大团生成的变换 */, double& best_score, double inlier_thresh, int iterations, const string &metric) {
 	int pointNum = src_corr_pts->points.size();
 	double pre_score = best_score;
-	for (size_t i = 0; i < iterations; i++)
+	for (int i = 0; i < iterations; i++)
 	{
 		double score = 0;
 		Eigen::VectorXd weights, weight_pred;
@@ -342,7 +343,7 @@ void post_refinement(vector<Corre_3DMatch>&correspondence, PointCloudPtr& src_co
 		vector<int> pred_inlier_index;
 		PointCloudPtr trans(new pcl::PointCloud<pcl::PointXYZ>);
 		pcl::transformPointCloud(*src_corr_pts, *trans, initial);
-		for (size_t j = 0; j < pointNum; j++)
+		for (int j = 0; j < pointNum; j++)
 		{
 			double dist = Distance(trans->points[j], des_corr_pts->points[j]);
 			double w = 1;
@@ -379,7 +380,7 @@ void post_refinement(vector<Corre_3DMatch>&correspondence, PointCloudPtr& src_co
 			pcl::copyPointCloud(*src_corr_pts, pred_inlier_index, *pred_src_pts);
 			pcl::copyPointCloud(*des_corr_pts, pred_inlier_index, *pred_des_pts);
 			weight_pred.resize(pred_inlier_index.size());
-			for (size_t k = 0; k < pred_inlier_index.size(); k++)
+			for (int k = 0; k < pred_inlier_index.size(); k++)
 			{
 				weight_pred[k] = weights[pred_inlier_index[k]];
 			}
@@ -394,18 +395,18 @@ void post_refinement(vector<Corre_3DMatch>&correspondence, PointCloudPtr& src_co
 	best_score = pre_score;
 }
 
-double evaluation_trans(vector<Corre_3DMatch>& Match, vector<Corre_3DMatch>& correspondnece, PointCloudPtr& src_corr_pts, PointCloudPtr& des_corr_pts, double weight_thresh, Eigen::Matrix4d& trans, double metric_thresh, string metric, float resolution) {
+double evaluation_trans(vector<Corre_3DMatch>& Match, vector<Corre_3DMatch>& correspondnece, PointCloudPtr& src_corr_pts, PointCloudPtr& des_corr_pts, double weight_thresh, Eigen::Matrix4d& trans, double metric_thresh, const string &metric, float resolution) {
 
 	PointCloudPtr src_pts(new pcl::PointCloud<pcl::PointXYZ>);
 	PointCloudPtr des_pts(new pcl::PointCloud<pcl::PointXYZ>);
 	vector<double>weights;
-	for (size_t i = 0; i < Match.size(); i++)
+	for (auto & i : Match)
 	{
-		if (Match[i].score > weight_thresh)
+		if (i.score > weight_thresh)
 		{
-			src_pts->push_back(Match[i].src);
-			des_pts->push_back(Match[i].des);
-			weights.push_back(Match[i].score);
+			src_pts->push_back(i.src);
+			des_pts->push_back(i.des);
+			weights.push_back(i.score);
 		}
 	}
 	if (weights.size() < 3)
@@ -427,7 +428,7 @@ double evaluation_trans(vector<Corre_3DMatch>& Match, vector<Corre_3DMatch>& cor
 	double score = 0.0;
 	int inlier = 0;
 	int corr_num = src_corr_pts->points.size();
-	for (size_t i = 0; i < corr_num; i++)
+	for (int i = 0; i < corr_num; i++)
 	{
 		double dist = Distance(src_trans->points[i], des_corr_pts->points[i]);
 		double w = 1;
@@ -468,9 +469,9 @@ void eigenvector_centrality(Eigen::MatrixXd& Graph, Eigen::VectorXd& initial, Ei
 	bool flag = false;
 
 	Eigen::MatrixXd zero_one = Graph;
-	for (size_t i = 0; i < Graph.rows(); i++)
+	for (int i = 0; i < Graph.rows(); i++)
 	{
-		for (size_t j = 0; j < Graph.cols(); j++) {
+		for (int j = 0; j < Graph.cols(); j++) {
 			zero_one(i, j) = Graph(i, j) ? 1 : 0;
 		}
 	}
@@ -482,7 +483,7 @@ void eigenvector_centrality(Eigen::MatrixXd& Graph, Eigen::VectorXd& initial, Ei
 		//cout << eigenvector_next << endl;
 		max = eigenvector_next.maxCoeff();
 		cout << max << endl;
-		for (size_t i = 0; i < eigenvector.size(); i++)
+		for (int i = 0; i < eigenvector.size(); i++)
 		{
 			if (eigenvector(i) != eigenvector_next(i)) {
 				break;
@@ -929,12 +930,12 @@ Eigen::VectorXf power_iteration(Eigen::MatrixXf& Graph, int iteration) {
 }
 
 //保存数据,需要与寻找法向量部分组合
-void savetxt(vector<Corre_3DMatch>corr, string save_path) {
+void savetxt(vector<Corre_3DMatch>corr, const string& save_path) {
 	ofstream outFile;
 	outFile.open(save_path.c_str(), ios::out);
-	for (int i = 0; i < corr.size(); i++)
+	for (auto & i : corr)
 	{
-		outFile << corr[i].src_index << " " << corr[i].des_index << endl;
+		outFile << i.src_index << " " << i.des_index << endl;
 	}
 	outFile.close();
 }

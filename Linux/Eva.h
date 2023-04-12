@@ -25,6 +25,7 @@
 using namespace std;
 extern bool add_overlap;
 extern bool low_inlieratio;
+extern bool no_logs;
 //
 #include <pcl/surface/gp3.h>
 #include <pcl/surface/mls.h>
@@ -138,7 +139,7 @@ void Correct_corre_select(PointCloudPtr cloud_s, PointCloudPtr cloud_t, vector<C
 double OTSU_thresh(/*vector<Vote> Vote_score*/Eigen::VectorXd values);
 double Distance(pcl::PointXYZ& A, pcl::PointXYZ& B);
 double Distance_3DMatch(Vertex A, Vertex B);
-Eigen::MatrixXf Graph_construction(vector<Corre_3DMatch>& correspondence, float resolution, bool sc2, string name, string descriptor);
+Eigen::MatrixXf Graph_construction(vector<Corre_3DMatch>& correspondence, float resolution, bool sc2, const string &name,const string &descriptor);
 Eigen::MatrixXf Graph_construction(vector<Corre_3DMatch>& correspondence, float resolution, bool sc2, float cmp_thresh);
 /**********************************************3DCorres_methods***************************************/
 //descriptor
@@ -181,26 +182,26 @@ void Corres_Viewer_Scorecolor(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_s, pcl::
 void Corres_initial_visual(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_s, pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_t, vector<Corre>& Hist_match, float& mr, Eigen::Matrix4d& GT_Mat);
 void Corres_selected_visual(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_s, pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_t, vector<Corre_3DMatch>& Hist_match, float& mr, float GT_thresh, Eigen::Matrix4d& GT_Mat);
 void Corres_Viewer_Score(PointCloudPtr cloud_s, PointCloudPtr cloud_t, vector<Corre_3DMatch>& Hist_match, float& mr, int k);
-bool compare_vote_score(const Vote v1, const Vote v2);
-bool compare_vote_degree(const Vote_exp v1, const Vote_exp v2);
-bool compare_corres_score(const Corre_3DMatch c1, const Corre_3DMatch c2);
+bool compare_vote_score(const Vote& v1, const Vote& v2);
+bool compare_vote_degree(const Vote_exp& v1, const Vote_exp& v2);
+bool compare_corres_score(const Corre_3DMatch& c1, const Corre_3DMatch& c2);
 vector<int> vectors_intersection(vector<int> v1, vector<int> v2);
 double calculate_rotation_error(Eigen::Matrix3d& est, Eigen::Matrix3d& gt);
 double calculate_translation_error(Eigen::Vector3d& est, Eigen::Vector3d& gt);
 void sort_row(MatD& matrix, MatD& sorted_matrix, Eigen::MatrixXi& index);
 void weight_SVD(PointCloudPtr& src_pts, PointCloudPtr& des_pts, Eigen::VectorXd& weights, double weight_threshold, Eigen::Matrix4d& trans_Mat);
-double evaluation_trans(vector<Corre_3DMatch>& Match, vector<Corre_3DMatch>& correspondence, PointCloudPtr& src_corr_pts, PointCloudPtr& des_corr_pts, double weight_thresh, Eigen::Matrix4d& trans, double metric_thresh, string metric, float resolution);
+double evaluation_trans(vector<Corre_3DMatch>& Match, vector<Corre_3DMatch>& correspondence, PointCloudPtr& src_corr_pts, PointCloudPtr& des_corr_pts, double weight_thresh, Eigen::Matrix4d& trans, double metric_thresh, const string &metric, float resolution);
 bool evaluation_est(Eigen::Matrix4d est, Eigen::Matrix4d gt, double re_thresh, double te_thresh, double& RE, double& TE);
 void print_and_destroy_cliques(igraph_vector_ptr_t* cliques);
 void find_largest_clique_of_node(Eigen::MatrixXf& Graph, igraph_vector_ptr_t* cliques, vector<Corre_3DMatch>& correspondence, node_cliques* result, vector<int>& remain, int num_node, int est_num, string descriptor);
-void post_refinement(vector<Corre_3DMatch>& correspondence, PointCloudPtr& src_corr_pts, PointCloudPtr& des_corr_pts, Eigen::Matrix4d& initial, double& best_score, double inlier_thresh, int iterations, string metric);
-bool registration(string name, string src_pointcloud, string des_pointcloud, string corr_path, string label_path, string ov_label, string gt_mat, string folderPath, double& RE, double& TE, double& inlier_num, double& total_num, double& inlier_ratio, double& success_num, double& total_estimate, string descriptor, vector<double>& time_consumption);
+void post_refinement(vector<Corre_3DMatch>& correspondence, PointCloudPtr& src_corr_pts, PointCloudPtr& des_corr_pts, Eigen::Matrix4d& initial, double& best_score, double inlier_thresh, int iterations, const string &metric);
+bool registration(const string &name,const string &src_pointcloud, const string &des_pointcloud,const string &corr_path, const string &label_path, const string &ov_label, const string &gt_mat, const string &folderPath, double& RE, double& TE, double& inlier_num, double& total_num, double& inlier_ratio, double& success_num, double& total_estimate, const string &descriptor, vector<double>& time_consumption);
 bool registration(PointCloudPtr& src, PointCloudPtr& des, vector<Corre_3DMatch>& correspondence, vector<double>& ov_corr_label, string folderPath, float resolution, float cmp_thresh);
 void GUO_ICP(PointCloudPtr& cloud_source, PointCloudPtr& cloud_target, float& mr, int& Max_iter_Num, Eigen::Matrix4f& Mat_ICP);
 void sort_eigenvector(Eigen::VectorXd& eigenvector, Eigen::VectorXd& sorted_eigenvector, Eigen::VectorXi& index_eigenvector);
 int GTM_corre_select(int Iterations, float mr, PointCloudPtr& cloud_source, PointCloudPtr& cloud_target, vector<Corre_3DMatch> Match, vector<int>& Match_inlier);
 int Geometric_consistency(vector<Vote_exp>pts_degree, vector<int>& Match_inlier);
 Eigen::VectorXf power_iteration(Eigen::MatrixXf& Graph, int iteration);
-void savetxt(vector<Corre_3DMatch>corr, string save_path);
+void savetxt(vector<Corre_3DMatch>corr, const string& save_path);
 void computeCentroidAndCovariance(Corre_3DMatch& c, PointCloudPtr& src_knn, PointCloudPtr& des_knn);
 #endif

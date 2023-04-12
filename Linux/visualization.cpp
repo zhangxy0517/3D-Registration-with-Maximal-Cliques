@@ -181,6 +181,7 @@ void visualization(PointCloudPtr cloud_src, PointCloudPtr cloud_tar, /*PointClou
 	//viewer.setSize(1280, 1024);
 	//transform
 	viewer.registerKeyboardCallback(&keyboardEventOccurred, (void*)NULL);
+    cout << "Press space to register." << endl;
 	while (!viewer.wasStopped())
 	{
 		viewer.spinOnce();

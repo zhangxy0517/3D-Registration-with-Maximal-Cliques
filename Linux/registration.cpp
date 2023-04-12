@@ -21,8 +21,51 @@ using namespace std;
 // igraph 0.9.9
 extern bool add_overlap;
 extern bool low_inlieratio;
+extern bool no_logs;
 
-bool registration(string name, string src_pointcloud, string des_pointcloud, string corr_path, string label_path, string ov_label, string gt_mat, string folderPath, double& RE, double& TE, double& inlier_num, double& total_num, double& inlier_ratio, double& success_num, double& total_estimate, string descriptor, vector<double>& time_consumption) {
+void calculate_gt_overlap(vector<Corre_3DMatch>&corre, PointCloudPtr &src, PointCloudPtr &tgt, Eigen::Matrix4d &GTmat,  bool ind, double GT_thresh){
+    PointCloudPtr src_trans(new pcl::PointCloud<pcl::PointXYZ>);
+    pcl::transformPointCloud(*src, *src_trans, GTmat);
+    pcl::KdTreeFLANN<pcl::PointXYZ> kdtree_src_trans, kdtree_des;
+    kdtree_src_trans.setInputCloud(src_trans);
+    kdtree_des.setInputCloud(tgt);
+    vector<int>src_ind(1), des_ind(1);
+    vector<float>src_dis(1), des_dis(1);
+    PointCloudPtr src_corr(new pcl::PointCloud<pcl::PointXYZ>);
+    PointCloudPtr src_corr_trans(new pcl::PointCloud<pcl::PointXYZ>);
+    if(!ind){
+        for(auto & i :corre){
+            src_corr->points.push_back(i.src);
+        }
+        pcl::transformPointCloud(*src_corr, *src_corr_trans, GTmat);
+        src_corr.reset(new pcl::PointCloud<pcl::PointXYZ>);
+    }
+    for(int i  = 0; i < corre.size(); i++){
+        pcl::PointXYZ src_query, des_query;
+        if(!ind){
+            src_query = src_corr_trans->points[i];
+            des_query = corre[i].des;
+        }
+        else{
+            src_query = src->points[corre[i].src_index];
+            des_query = tgt->points[corre[i].des_index];
+        }
+        kdtree_des.nearestKSearch(src_query, 1, des_ind, src_dis);
+        kdtree_src_trans.nearestKSearch(des_query, 1, src_ind, des_dis);
+        int src_ov_score = src_dis[0] > pow(GT_thresh,2) ? 0 : 1; //square dist  <= GT_thresh
+        int des_ov_score = des_dis[0] > pow(GT_thresh,2) ? 0 : 1;
+        if(src_ov_score && des_ov_score){
+            corre[i].score = 1;
+        }
+        else{
+            corre[i].score = 0;
+        }
+    }
+    src_corr_trans.reset(new pcl::PointCloud<pcl::PointXYZ>);
+    src_trans.reset(new pcl::PointCloud<pcl::PointXYZ>);
+}
+
+bool registration(const string &name,const string &src_pointcloud, const string &des_pointcloud,const string &corr_path, const string &label_path, const string &ov_label, const string &gt_mat, const string &folderPath, double& RE, double& TE, double& inlier_num, double& total_num, double& inlier_ratio, double& success_num, double& total_estimate, const string &descriptor, vector<double>& time_consumption) {
 	bool sc2 = true;
 	bool Corr_select = false;
 	bool GT_cmp_mode = false;
@@ -31,7 +74,7 @@ bool registration(string name, string src_pointcloud, string des_pointcloud, str
 	string metric = "MAE";
 
 	success_num = 0;
-	if (access(folderPath.c_str(), 0))
+	if (!no_logs && access(folderPath.c_str(), 0))
 	{
 		if (mkdir(folderPath.c_str(),S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) != 0) {
 			cout << " 创建数据项目录失败 " << endl;
@@ -118,46 +161,21 @@ bool registration(string name, string src_pointcloud, string des_pointcloud, str
 			std::cout << " error in loading target pointcloud. " << std::endl;
 			exit(-1);
 		}
-        if(add_overlap && ov_label == "NULL"){ // GT overlap
-            PointCloudPtr src_trans(new pcl::PointCloud<pcl::PointXYZ>);
-            pcl::transformPointCloud(*cloud_src, *src_trans, GTmat);
-            pcl::KdTreeFLANN<pcl::PointXYZ> kdtree_src_trans, kdtree_des;
-            kdtree_src_trans.setInputCloud(src_trans);
-            kdtree_des.setInputCloud(cloud_des);
-            vector<int>src_ind(1), des_ind(1);
-            vector<float>src_dis(1), des_dis(1);
-            while (!feof(corr)) {
-                Corre_3DMatch t;
-                pcl::PointXYZ src, des;
-                fscanf(corr, "%f %f %f %f %f %f\n", &src.x, &src.y, &src.z, &des.x, &des.y, &des.z);
-                t.src = src;
-                t.des = des;
-
-                kdtree_des.nearestKSearch(src, 1, des_ind, src_dis);
-                kdtree_src_trans.nearestKSearch(des, 1, src_ind, des_dis);
-                int src_ov_score = src_dis[0] > 0.0375 ? 0 : 1; //square dist  <= GT_thresh
-                int des_ov_score = des_dis[0] > 0.0375 ? 0 : 1;
-                if(src_ov_score && des_ov_score){
-                    t.score = 1;
-                }
-                else{
-                    t.score = 0;
-                }
-                correspondence.push_back(t);
-            }
+        while (!feof(corr)) {
+            Corre_3DMatch t;
+            pcl::PointXYZ src, des;
+            fscanf(corr, "%f %f %f %f %f %f\n", &src.x, &src.y, &src.z, &des.x, &des.y, &des.z);
+            t.src = src;
+            t.des = des;
+            correspondence.push_back(t);
         }
-        else{
-            while (!feof(corr)) {
-                Corre_3DMatch t;
-                pcl::PointXYZ src, des;
-                int src_ind, des_ind;
-                //fscanf(corr, "%d %d\n", &src_ind, &des_ind);
-                //t.src = cloud_src->points[src_ind];
-                //t.des = cloud_des->points[des_ind];
-                fscanf(corr, "%f %f %f %f %f %f\n", &src.x, &src.y, &src.z, &des.x, &des.y, &des.z);
-                t.src = src;
-                t.des = des;
-                correspondence.push_back(t);
+        if(add_overlap && ov_label == "NULL") { // GT overlap
+            cout << "load gt overlap" << endl;
+            calculate_gt_overlap(correspondence, cloud_src, cloud_des, GTmat, false, 0.0375);
+        }
+        else if (add_overlap && ov_label != "NULL"){
+            for(int i  = 0; i < correspondence.size(); i++){
+                correspondence[i].score = ov_corr_label[i];
             }
         }
 		fclose(corr);
@@ -165,6 +183,7 @@ bool registration(string name, string src_pointcloud, string des_pointcloud, str
 	else {
 		if (name == "KITTI")//KITTI
 		{
+            int idx = 0;
 			kitti = true;
 			while (!feof(corr))
 			{
@@ -173,7 +192,16 @@ bool registration(string name, string src_pointcloud, string des_pointcloud, str
 				fscanf(corr, "%f %f %f %f %f %f\n", &src.x, &src.y, &src.z, &des.x, &des.y, &des.z);
 				t.src = src;
 				t.des = des;
+                if (add_overlap)
+                {
+                    t.score = ov_corr_label[idx];
+                }
+                else
+                {
+                    t.score = 0;
+                }
 				correspondence.push_back(t);
+                idx++;
 			}
 			fclose(corr);
 		}
@@ -259,6 +287,10 @@ bool registration(string name, string src_pointcloud, string des_pointcloud, str
 				fclose(corr);
 				//src_ind.clear(); des_ind.clear();
 				//src_dis.clear(); des_dis.clear();
+                if(add_overlap && ov_label == "NULL"){
+                    cout << "load gt overlap" << endl;
+                    calculate_gt_overlap(correspondence, cloud_src, cloud_des, GTmat, false, 0.0375);
+                }
 			}
 			else {
 				int idx = 0;
@@ -282,7 +314,7 @@ bool registration(string name, string src_pointcloud, string des_pointcloud, str
 					idx++;
 				}
 				fclose(corr);
-				if (add_overlap)
+/*				if (add_overlap)
 				{
 					string raw_src_file = dataPath + "/" + item_name + "_raw_src.pcd";
 					string raw_des_file = dataPath + "/" + item_name + "_raw_des.pcd";
@@ -322,7 +354,7 @@ bool registration(string name, string src_pointcloud, string des_pointcloud, str
 //                        des_dis.clear();
 //					}
 //					cout << "number of query points: " << Overlap_src->points.size() << endl;
-				}
+				}*/
 			}
 		}
 		else {
@@ -459,6 +491,7 @@ bool registration(string name, string src_pointcloud, string des_pointcloud, str
 	total_time += elapsed_time;
 	cout << " graph construction: " << elapsed_time.count() << endl; //需要检验图是否连通？
 	if (Graph.norm() == 0) {
+        cout << "Graph is disconnected." << endl;
 		return false;
 	}
 	/*MatD sorted_Graph;
@@ -554,36 +587,39 @@ bool registration(string name, string src_pointcloud, string des_pointcloud, str
 
 	sort(cluster_factor.begin(), cluster_factor.end(), compare_vote_score);
 	sort(pts_degree.begin(), pts_degree.end(), compare_vote_degree);
-	string point_degree = folderPath + "/degree.txt";
-	string cluster = folderPath + "/cluster.txt";
-	FILE* exp = fopen(point_degree.c_str(), "w");
-	for (size_t i = 0; i < total_num; i++)
-	{
-		fprintf(exp, "%d : %d ", pts_degree[i].index, pts_degree[i].degree);
-		if (true_corre[pts_degree[i].index])
-		{
-			fprintf(exp, "1 ");
-		}
-		else {
-			fprintf(exp, "0 ");
-		}
-		fprintf(exp, "%d\n", pts_degree[i].true_num);
-	}
-	fclose(exp);
-	exp = fopen(cluster.c_str(), "w");
-	for (size_t i = 0; i < total_num; i++)
-	{
-		fprintf(exp, "%d : %f ", cluster_factor[i].index, cluster_factor[i].score);
-		if (true_corre[cluster_factor[i].index])
-		{
-			fprintf(exp, "1 ");
-		}
-		else {
-			fprintf(exp, "0 ");
-		}
-		fprintf(exp, "%d\n", pts_degree_bac[cluster_factor[i].index].true_num);
-	}
-	fclose(exp);
+
+    if(!no_logs){
+        string point_degree = folderPath + "/degree.txt";
+        string cluster = folderPath + "/cluster.txt";
+        FILE* exp = fopen(point_degree.c_str(), "w");
+        for (size_t i = 0; i < total_num; i++)
+        {
+            fprintf(exp, "%d : %d ", pts_degree[i].index, pts_degree[i].degree);
+            if (true_corre[pts_degree[i].index])
+            {
+                fprintf(exp, "1 ");
+            }
+            else {
+                fprintf(exp, "0 ");
+            }
+            fprintf(exp, "%d\n", pts_degree[i].true_num);
+        }
+        fclose(exp);
+        exp = fopen(cluster.c_str(), "w");
+        for (size_t i = 0; i < total_num; i++)
+        {
+            fprintf(exp, "%d : %f ", cluster_factor[i].index, cluster_factor[i].score);
+            if (true_corre[cluster_factor[i].index])
+            {
+                fprintf(exp, "1 ");
+            }
+            else {
+                fprintf(exp, "0 ");
+            }
+            fprintf(exp, "%d\n", pts_degree_bac[cluster_factor[i].index].true_num);
+        }
+        fclose(exp);
+    }
 
 	Eigen::VectorXd cluster_coefficients;
 	cluster_coefficients.resize(cluster_factor.size());
@@ -682,12 +718,12 @@ bool registration(string name, string src_pointcloud, string des_pointcloud, str
 
 		}
 		else {
-			if (cluster_threshold > 3 /*max(OTSU, total_factor) > 0.3*/) //减少图规模
+			if (cluster_threshold > 2.5 /*max(OTSU, total_factor) > 0.3*/) //减少图规模
 			{
 				double f = 10;
 				while (1)
 				{
-					if (f * max(OTSU, total_factor) > cluster_factor[100].score)
+					if (f * max(OTSU, total_factor) > cluster_factor[50].score)
 					{
 						f -= 0.05;
 					}
@@ -767,13 +803,10 @@ bool registration(string name, string src_pointcloud, string des_pointcloud, str
 
 		PointCloudPtr src_corr_pts(new pcl::PointCloud<pcl::PointXYZ>);
 		PointCloudPtr des_corr_pts(new pcl::PointCloud<pcl::PointXYZ>);
-		//vector<Corre_3DMatch>correspondence_selected;
 		for (size_t i = 0; i < correspondence.size(); i++)
-		{
-			//if (correspondence[i].score > weight_thresh) {
-				src_corr_pts->push_back(correspondence[i].src);
-				des_corr_pts->push_back(correspondence[i].des);
-			//}
+        {
+            src_corr_pts->push_back(correspondence[i].src);
+            des_corr_pts->push_back(correspondence[i].des);
 		}
 		
 		/******************************************配准部分***************************************************/
@@ -828,9 +861,6 @@ bool registration(string name, string src_pointcloud, string des_pointcloud, str
 				{
 					//评估est
 					double re, te;
-					//8.27 
-					//1.启发式评估函数设计->设计能够评估团的置信度的指标->匹配之间的平行关系
-					//2.匹配权值设计->聚类系数
 					bool success = evaluation_est(est_trans, GTmat, 15, 30, re, te);
 #pragma omp critical
 					{
@@ -898,7 +928,6 @@ bool registration(string name, string src_pointcloud, string des_pointcloud, str
 
 		for (int i = 0; i < selected.size(); i++)
 		{
-			//cout << cluster_factor_bac[corre_index[i]].score << " ";
 			cout << selected[i].score << " ";
 		}
 		cout << endl;
@@ -925,24 +954,26 @@ bool registration(string name, string src_pointcloud, string des_pointcloud, str
 			Corres_selected_visual(cloud_src, cloud_des, correspondence, resolution, 0.1, GTmat);
 		}*/
 
-		//保存匹配到txt
-		//savetxt(correspondence, folderPath + "/corr.txt");
-		//savetxt(selected, folderPath + "/selected.txt");
-		string save_est = folderPath + "/est.txt";
-		//string save_gt = folderPath + "/GTmat.txt";
-		ofstream outfile(save_est, ios::trunc);
-		outfile.setf(ios::fixed, ios::floatfield);
-		outfile << setprecision(10) << best_est;
-		outfile.close();
-		//CopyFile(gt_mat.c_str(), save_gt.c_str(), false);
-		//string save_label = folderPath + "/label.txt";
-		//CopyFile(label_path.c_str(), save_label.c_str(), false);
+        if(!no_logs){
+            //保存匹配到txt
+            //savetxt(correspondence, folderPath + "/corr.txt");
+            //savetxt(selected, folderPath + "/selected.txt");
+            string save_est = folderPath + "/est.txt";
+            //string save_gt = folderPath + "/GTmat.txt";
+            ofstream outfile(save_est, ios::trunc);
+            outfile.setf(ios::fixed, ios::floatfield);
+            outfile << setprecision(10) << best_est;
+            outfile.close();
+            //CopyFile(gt_mat.c_str(), save_gt.c_str(), false);
+            //string save_label = folderPath + "/label.txt";
+            //CopyFile(label_path.c_str(), save_label.c_str(), false);
 
-		//保存ply
-		//string save_src_cloud = folderPath + "/source.ply";
-		//string save_tgt_cloud = folderPath + "/target.ply";
-		//CopyFile(src_pointcloud.c_str(), save_src_cloud.c_str(), false);
-		//CopyFile(des_pointcloud.c_str(), save_tgt_cloud.c_str(), false);
+            //保存ply
+            //string save_src_cloud = folderPath + "/source.ply";
+            //string save_tgt_cloud = folderPath + "/target.ply";
+            //CopyFile(src_pointcloud.c_str(), save_src_cloud.c_str(), false);
+            //CopyFile(des_pointcloud.c_str(), save_tgt_cloud.c_str(), false);
+        }
 
 		correspondence.clear();
 		correspondence.shrink_to_fit();
@@ -1057,19 +1088,15 @@ bool registration(PointCloudPtr& src, PointCloudPtr& des, vector<Corre_3DMatch>&
     std::chrono::time_point<std::chrono::system_clock> start, end;
     std::chrono::duration<double> elapsed_time, total_time;
 
-    //8.27 构图：一阶兼容性图能够表示节点之间的连接关系，二阶兼容性图能够去除所有没能够形成三元环的边(获得权重的重要信息！！！)
     start = std::chrono::system_clock::now();
     Eigen::MatrixXf Graph = Graph_construction(correspondence, resolution, sc2, cmp_thresh);
     end = std::chrono::system_clock::now();
     elapsed_time = end - start;
     total_time += elapsed_time;
-    cout << " graph construction: " << elapsed_time.count() << endl; //需要检验图是否连通？
+    cout << " graph construction: " << elapsed_time.count() << endl;
     if (Graph.norm() == 0) {
         return false;
     }
-    /*MatD sorted_Graph;
-    MatrixXi sort_index;
-    sort_row(Graph, sorted_Graph, sort_index);*/
 
     vector<int>degree(total_num, 0);
     vector<Vote_exp> pts_degree;
@@ -1091,7 +1118,6 @@ bool registration(PointCloudPtr& src, PointCloudPtr& des, vector<Corre_3DMatch>&
         pts_degree.push_back(t);
     }
 
-    //计算节点聚类系数
     start = std::chrono::system_clock::now();
     vector<Vote> cluster_factor;
     double sum_fenzi = 0;
@@ -1168,13 +1194,12 @@ bool registration(PointCloudPtr& src, PointCloudPtr& des, vector<Corre_3DMatch>&
     double OTSU = 0;
     if (cluster_factor[0].score != 0)
     {
-        OTSU = OTSU_thresh(cluster_coefficients); //得到的阈值超出系数的范围？
+        OTSU = OTSU_thresh(cluster_coefficients);
     }
-    double cluster_threshold = min(OTSU, min(average_factor, total_factor)); //问题一：这里的阈值选择能否根据图中点边关系得出？
+    double cluster_threshold = min(OTSU, min(average_factor, total_factor));
 
     cout << cluster_threshold << "->min(" << average_factor << " " << total_factor << " " << OTSU << ")" << endl;
-    //OTSU计算权重的阈值
-    double weight_thresh = cluster_threshold; //OTSU_thresh(sorted);
+    double weight_thresh = cluster_threshold;
     if (add_overlap)
     {
         weight_thresh = 0.5;
@@ -1280,7 +1305,6 @@ bool registration(PointCloudPtr& src, PointCloudPtr& des, vector<Corre_3DMatch>&
 
     PointCloudPtr src_corr_pts(new pcl::PointCloud<pcl::PointXYZ>);
     PointCloudPtr des_corr_pts(new pcl::PointCloud<pcl::PointXYZ>);
-    //vector<Corre_3DMatch>correspondence_selected;
     for (size_t i = 0; i < correspondence.size(); i++) {
         src_corr_pts->push_back(correspondence[i].src);
         des_corr_pts->push_back(correspondence[i].des);
