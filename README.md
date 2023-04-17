@@ -24,10 +24,18 @@ Please refer to [Compiling on Windows](https://github.com/zhangxy0517/3D-Registr
 ### Linux version
 Please refer to [Compiling on Linux](https://github.com/zhangxy0517/3D-Registration-with-Maximal-Cliques/blob/main/Linux/readme.md) for details.
 
-## Usages
-### Usage 1: register a 'source' point cloud to a 'target' point cloud.
-
-### Usage 2: register a bunch of point cloud pairs in a batch mode.
+## Usage:
+* [`--help`] list all usages.
+* [`--demo`] run the demo.
+### Required args:
+* [`--output_path`] output path for saving results. 
+* [`--input_path`] input data path. 
+* [`--dataset_name`] dataset name.
+* [`--descriptor`] descriptor name. 
+* [`--start_index`] start from given index. 
+### Optional args:
+* [`--lowInlierRatio`] run test on the LoInlierRatio dataset.
+* [`--add_overlap`] add the overlap input. 
 
 ## Datasets
 ### U3M
