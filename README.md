@@ -25,17 +25,18 @@ Please refer to [Compiling on Windows](https://github.com/zhangxy0517/3D-Registr
 Please refer to [Compiling on Linux](https://github.com/zhangxy0517/3D-Registration-with-Maximal-Cliques/blob/main/Linux/readme.md) for details.
 
 ## Usage:
-* [`--help`] list all usages.
-* [`--demo`] run the demo.
+* `--help` list all usages.
+* `--demo` run the demo.
 ### Required args:
-* [`--output_path`] output path for saving results. 
-* [`--input_path`] input data path. 
-* [`--dataset_name`] dataset name.
-* [`--descriptor`] descriptor name. 
-* [`--start_index`] start from given index. 
+* `--output_path` output path for saving results. 
+* `--input_path` input data path. 
+* `--dataset_name`[3dmatch/3dlomatch/KITTI/ETH/U3M] dataset name.
+* `--descriptor`[fpfh/fcgf/spinnet/predator] descriptor name. 
+* `--start_index`(begin from 0) run from given index. 
 ### Optional args:
-* [`--lowInlierRatio`] run test on the LoInlierRatio dataset.
-* [`--add_overlap`] add the overlap input. 
+* `--lowInlierRatio` run test on the LoInlierRatio dataset.
+* `--add_overlap` add the overlap input.
+* `--no_logs` forbid generation of log files.
 
 ## Datasets
 ### U3M
