@@ -23,7 +23,7 @@ extern bool add_overlap;
 extern bool low_inlieratio;
 extern bool no_logs;
 
-void calculate_gt_overlap(vector<Corre_3DMatch>&corre, PointCloudPtr &src, PointCloudPtr &tgt, Eigen::Matrix4d &GTmat,  bool ind, double GT_thresh){
+void calculate_gt_overlap(vector<Corre_3DMatch>&corre, PointCloudPtr &src, PointCloudPtr &tgt, Eigen::Matrix4d &GTmat,  bool ind, double GT_thresh, double &max_corr_weight){
     PointCloudPtr src_trans(new pcl::PointCloud<pcl::PointXYZ>);
     pcl::transformPointCloud(*src, *src_trans, GTmat);
     pcl::KdTreeFLANN<pcl::PointXYZ> kdtree_src_trans, kdtree_des;
@@ -56,6 +56,7 @@ void calculate_gt_overlap(vector<Corre_3DMatch>&corre, PointCloudPtr &src, Point
         int des_ov_score = des_dis[0] > pow(GT_thresh,2) ? 0 : 1;
         if(src_ov_score && des_ov_score){
             corre[i].score = 1;
+            max_corr_weight = 1;
         }
         else{
             corre[i].score = 0;
@@ -71,6 +72,7 @@ bool registration(const string &name,const string &src_pointcloud, const string 
 	bool GT_cmp_mode = false;
 	int max_est_num = INT_MAX;
 	bool ransc_original = false;
+    bool instance_equal = false;
 	string metric = "MAE";
 
 	success_num = 0;
@@ -103,6 +105,7 @@ bool registration(const string &name,const string &src_pointcloud, const string 
 
 	FILE* ov;
 	vector<double>ov_corr_label;
+    double max_corr_weight = 0;
 	if (add_overlap && ov_label != "NULL")
 	{
 		ov = fopen(ov_label.c_str(), "r");
@@ -114,7 +117,12 @@ bool registration(const string &name,const string &src_pointcloud, const string 
 		{
 			double value;
 			fscanf(ov, "%lf\n", &value);
+            if(value > max_corr_weight){
+                max_corr_weight = value;
+            }
 			ov_corr_label.push_back(value);
+
+            //4.12 记录最大的weight
 		}
 		fclose(ov);
 		cout << "load overlap data finished." << endl;
@@ -171,11 +179,14 @@ bool registration(const string &name,const string &src_pointcloud, const string 
         }
         if(add_overlap && ov_label == "NULL") { // GT overlap
             cout << "load gt overlap" << endl;
-            calculate_gt_overlap(correspondence, cloud_src, cloud_des, GTmat, false, 0.0375);
+            calculate_gt_overlap(correspondence, cloud_src, cloud_des, GTmat, false, 0.0375, max_corr_weight);
         }
         else if (add_overlap && ov_label != "NULL"){
             for(int i  = 0; i < correspondence.size(); i++){
                 correspondence[i].score = ov_corr_label[i];
+                if(ov_corr_label[i] > max_corr_weight){
+                    max_corr_weight = ov_corr_label[i];
+                }
             }
         }
 		fclose(corr);
@@ -265,6 +276,7 @@ bool registration(const string &name,const string &src_pointcloud, const string 
 //				kdtree_des.setInputCloud(cloud_des);
 //				vector<int>src_ind(1), des_ind(1);
 //				vector<float>src_dis(1), des_dis(1);
+                int idx = 0;
 				while (!feof(corr))
 				{
 					Corre_3DMatch t;
@@ -281,15 +293,23 @@ bool registration(const string &name,const string &src_pointcloud, const string 
 					//t.des_index = des_ind[0];
 					//t.src_norm = src_vector;
 					//t.des_norm = des_vector;
+                    if (add_overlap && ov_label != "NULL")
+                    {
+                        t.score = ov_corr_label[idx];
+                    }
+                    else{
+                        t.score = 0;
+                    }
 					t.inlier_weight = 0;
 					correspondence.push_back(t);
+                    idx ++;
 				}
 				fclose(corr);
 				//src_ind.clear(); des_ind.clear();
 				//src_dis.clear(); des_dis.clear();
                 if(add_overlap && ov_label == "NULL"){
                     cout << "load gt overlap" << endl;
-                    calculate_gt_overlap(correspondence, cloud_src, cloud_des, GTmat, false, 0.0375);
+                    calculate_gt_overlap(correspondence, cloud_src, cloud_des, GTmat, false, 0.0375, max_corr_weight);
                 }
 			}
 			else {
@@ -640,16 +660,28 @@ bool registration(const string &name,const string &src_pointcloud, const string 
 	cout << " inliers: " << inlier_num << "\ttotal num: " << total_num << "\tinlier ratio: " << inlier_ratio << endl;
 	//OTSU计算权重的阈值
 	double weight_thresh = cluster_threshold; //OTSU_thresh(sorted);
+
 	if (add_overlap)
 	{
-		weight_thresh = 0.5;
+        cout << "Max weight: " << max_corr_weight << endl;
+        if(max_corr_weight > 0.5){
+            weight_thresh = 0.5;
+            //internal_selection = true;
+        }
+        else {
+             cout << "internal selection is unused." << endl;
+            weight_thresh = 0;
+            if(max_corr_weight == 0){
+                instance_equal = true;
+            }
+        }
 	}
 	else {
 		weight_thresh = 0;
 	}
 
 	//匹配置信度评分
-	if (!add_overlap)
+	if (!add_overlap || instance_equal)
 	{
 		for (size_t i = 0; i < total_num; i++)
 		{
@@ -718,12 +750,12 @@ bool registration(const string &name,const string &src_pointcloud, const string 
 
 		}
 		else {
-			if (cluster_threshold > 2.5 /*max(OTSU, total_factor) > 0.3*/) //减少图规模
+			if (cluster_threshold > 3 && correspondence.size() > 50/*max(OTSU, total_factor) > 0.3*/) //减少图规模
 			{
 				double f = 10;
 				while (1)
 				{
-					if (f * max(OTSU, total_factor) > cluster_factor[50].score)
+					if (f * max(OTSU, total_factor) > cluster_factor[49].score)
 					{
 						f -= 0.05;
 					}
@@ -852,7 +884,7 @@ bool registration(const string &name,const string &src_pointcloud, const string 
             //igraph_vector_destroy(v);
 			Eigen::Matrix4d est_trans;
 			//团结构评分
-			double score = evaluation_trans(Group, correspondence, src_corr_pts, des_corr_pts, weight_thresh, est_trans, inlier_thresh, metric,raw_des_resolution);
+			double score = evaluation_trans(Group, correspondence, src_corr_pts, des_corr_pts, weight_thresh, est_trans, inlier_thresh, metric,raw_des_resolution, instance_equal);
 
 			if (GT_cmp_mode)
 			{
@@ -1223,12 +1255,12 @@ bool registration(PointCloudPtr& src, PointCloudPtr& des, vector<Corre_3DMatch>&
     igraph_vector_init(&weights, Graph.rows() * (Graph.cols() - 1) / 2);
     igraph_matrix_init(&g_mat, Graph.rows(), Graph.cols());
 
-    if (cluster_threshold > 3 /*max(OTSU, total_factor) > 0.3*/) //减少图规模
+    if (cluster_threshold > 3 && correspondence.size() > 100 /*max(OTSU, total_factor) > 0.3*/) //减少图规模
     {
         double f = 10;
         while (1)
         {
-            if (f * max(OTSU, total_factor) > cluster_factor[100].score)
+            if (f * max(OTSU, total_factor) > cluster_factor[99].score)
             {
                 f -= 0.05;
             }
@@ -1336,7 +1368,8 @@ bool registration(PointCloudPtr& src, PointCloudPtr& des, vector<Corre_3DMatch>&
         //igraph_vector_destroy(v);
         Eigen::Matrix4d est_trans;
         //团结构评分
-        double score = evaluation_trans(Group, correspondence, src_corr_pts, des_corr_pts, weight_thresh, est_trans, inlier_thresh, metric,resolution);
+        double score = evaluation_trans(Group, correspondence, src_corr_pts, des_corr_pts, weight_thresh, est_trans, inlier_thresh, metric,resolution,
+                                        true);
 
         //GT未知
         if (score > 0)

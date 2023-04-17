@@ -119,7 +119,7 @@ Eigen::MatrixXf Graph_construction(vector<Corre_3DMatch>& correspondence, float 
 					score = 1 - (dis * dis) / (0.1 * 0.1);
 					if (add_overlap || low_inlieratio) // 0228
 					{
-                        score = (score < 0.995) ? 0 : score; //fpfh/fcgf overlap 0.99
+                        score = (score < 0.99) ? 0 : score; //fpfh/fcgf overlap 0.99
 //                        else {
 //                            alpha_dis = 10 * resolution;
 //                            score = exp(-dis * dis / (2 * alpha_dis * alpha_dis));
@@ -149,7 +149,9 @@ Eigen::MatrixXf Graph_construction(vector<Corre_3DMatch>& correspondence, float 
 						score = (score < 0.995) ? 0 : score;
 					}
 					else if (descriptor == "spinnet" || descriptor == "d3feat") {
-						score = (score < 0.99) ? 0 : score; //sample < 1000 0.9?
+						score = (score < 0.85) ? 0 : score;
+                        // spinnet 5000 2500 1000 500 250
+                        //         0.99 0.99 0.95 0.9 0.85
 					}
 					else {
 						score = (score < 0.99) ? 0 : score; //3dlomatch 0.99, 3dmatch fcgf 0.999 fpfh 0.995
@@ -395,14 +397,14 @@ void post_refinement(vector<Corre_3DMatch>&correspondence, PointCloudPtr& src_co
 	best_score = pre_score;
 }
 
-double evaluation_trans(vector<Corre_3DMatch>& Match, vector<Corre_3DMatch>& correspondnece, PointCloudPtr& src_corr_pts, PointCloudPtr& des_corr_pts, double weight_thresh, Eigen::Matrix4d& trans, double metric_thresh, const string &metric, float resolution) {
+double evaluation_trans(vector<Corre_3DMatch>& Match, vector<Corre_3DMatch>& correspondnece, PointCloudPtr& src_corr_pts, PointCloudPtr& des_corr_pts, double weight_thresh, Eigen::Matrix4d& trans, double metric_thresh, const string &metric, float resolution, bool instance_equal) {
 
 	PointCloudPtr src_pts(new pcl::PointCloud<pcl::PointXYZ>);
 	PointCloudPtr des_pts(new pcl::PointCloud<pcl::PointXYZ>);
 	vector<double>weights;
 	for (auto & i : Match)
 	{
-		if (i.score > weight_thresh)
+		if (i.score >= weight_thresh)
 		{
 			src_pts->push_back(i.src);
 			des_pts->push_back(i.des);
@@ -417,7 +419,7 @@ double evaluation_trans(vector<Corre_3DMatch>& Match, vector<Corre_3DMatch>& cor
 	weights.clear();
     weights.shrink_to_fit();
 	weight_vec /= weight_vec.maxCoeff();
-	if (!add_overlap) {
+	if (!add_overlap || instance_equal) {
 		weight_vec.setOnes(); // 2023.2.23 
 	}
 	weight_SVD(src_pts, des_pts, weight_vec, 0, trans);

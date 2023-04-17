@@ -105,7 +105,8 @@ vector<string> analyse(const string& name, const string& result_scene, const str
 		string gt_mat_path = dataset_scene + "/" + pair + (descriptor == "fcgf" ? "@GTmat_fcgf.txt" : "@GTmat.txt");
 
 		//调用 源.cpp
-		string ov_label = "NULL";
+		//string ov_label = "NULL";
+        string ov_label = dataset_scene + "/" + pair + "@gt_ov.txt";
 		double re, te, inlier_num, total_num, inlier_ratio, success_estimate, total_estimate;
 		int corrected = registration(name, src_filename, des_filename, corr_path, gt_label, ov_label, gt_mat_path, result_folder, re, te, inlier_num, total_num, inlier_ratio, success_estimate, total_estimate, descriptor, time);
 		int iter = iters;
@@ -398,7 +399,7 @@ int main(int argc, char** argv) {
 			string gt_label_path = datasetPath + "/" + filename + "@label.txt";
             string ov_label = "NULL";
             if(add_overlap){
-                ov_label = datasetPath + "/" + filename + "@gt_ov.txt";
+                ov_label = datasetPath + "/" + filename + "@predator_ov.txt";
             }
 			string folderPath = resultPath + "/" + filename;
 			double re, te;
