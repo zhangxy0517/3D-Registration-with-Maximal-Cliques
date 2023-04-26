@@ -53,3 +53,15 @@ Download links can be found in [LoInlierRatio](https://github.com/zhangxy0517/3D
 ## Results
 
 ## Citation
+If you find this code useful for your work or use it in your project, please consider citing:
+
+```shell
+@InProceedings{Huang_2021_CVPR,
+    author    = {Xiyu Zhang, Jiaqi Yang, Shikun Zhang and Yanning Zhang},
+    title     = {3D Registration with Maximal Cliques},
+    booktitle = {Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)},
+    month     = {June},
+    year      = {2023},
+    pages     = {}
+}
+```
