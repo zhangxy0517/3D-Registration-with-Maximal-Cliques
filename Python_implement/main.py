@@ -5,7 +5,7 @@ import igraph
 import os
 import open3d as o3d
 
-os.environ['CUDA_VISIBLE_DEVICES'] = "1"
+os.environ['CUDA_VISIBLE_DEVICES'] = "0"
 cuda = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
