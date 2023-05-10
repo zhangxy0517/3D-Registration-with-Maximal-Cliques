@@ -1,5 +1,5 @@
 # Python implementation of basic MAC 
-## required packages
+## Required packages
 ```
 numpy==1.23.0
 open3d==0.15.2
