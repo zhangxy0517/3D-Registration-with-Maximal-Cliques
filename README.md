@@ -25,7 +25,7 @@ Please refer to [Compiling on Windows](https://github.com/zhangxy0517/3D-Registr
 Please refer to [Compiling on Linux](https://github.com/zhangxy0517/3D-Registration-with-Maximal-Cliques/blob/main/Linux/readme.md) for details.
 
 ### Python implementation
-We provide a simple demo in python, please refer to [Python_implement](https://github.com/zhangxy0517/3D-Registration-with-Maximal-Cliques/blob/main/Python_implement/readme.md) for details.
+We provide a simple demo in python, please refer to [Python_implement](https://github.com/zhangxy0517/3D-Registration-with-Maximal-Cliques/blob/main/Python_implement/README.md) for details.
 
 ## Usage:
 * `--help` list all usages.
