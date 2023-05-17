@@ -231,9 +231,7 @@ vector<int> vectors_intersection(vector<int> v1, vector<int> v2) {
 
 double calculate_rotation_error(Eigen::Matrix3d& est, Eigen::Matrix3d& gt) {
 	double tr = (est.transpose() * gt).trace();
-	if (tr > 3) tr = 3;
-	if (tr < -1) tr = -1;
-	return acos((tr - 1) / 2) * 180.0 / M_PI;
+	return acos(min(max((tr - 1.0) / 2.0, -1.0), 1.0)) * 180.0 / M_PI;
 }
 
 double calculate_translation_error(Eigen::Vector3d& est, Eigen::Vector3d& gt) {
