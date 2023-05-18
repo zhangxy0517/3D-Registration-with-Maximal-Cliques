@@ -84,9 +84,7 @@ bool registration(const string &name,const string &src_pointcloud, const string 
 		}
 	}
 	cout << folderPath << endl;
-	// 获取数据文件目录
 	string dataPath = corr_path.substr(0, corr_path.rfind("/"));
-	// 获取当前项目名称
 	string item_name = folderPath.substr(folderPath.rfind("/") + 1, folderPath.length());
 
 	FILE* corr, * gt;
@@ -122,7 +120,6 @@ bool registration(const string &name,const string &src_pointcloud, const string 
             }
 			ov_corr_label.push_back(value);
 
-            //4.12 记录最大的weight
 		}
 		fclose(ov);
 		cout << "load overlap data finished." << endl;
@@ -137,7 +134,7 @@ bool registration(const string &name,const string &src_pointcloud, const string 
 
 	PointCloudPtr cloud_src(new pcl::PointCloud<pcl::PointXYZ>);
 	PointCloudPtr cloud_des(new pcl::PointCloud<pcl::PointXYZ>);
-	pcl::PointCloud<pcl::Normal>::Ptr normal_src(new pcl::PointCloud<pcl::Normal>);//法向量计算结果
+	pcl::PointCloud<pcl::Normal>::Ptr normal_src(new pcl::PointCloud<pcl::Normal>);
 	pcl::PointCloud<pcl::Normal>::Ptr normal_des(new pcl::PointCloud<pcl::Normal>);
 	vector<Corre_3DMatch>correspondence;
 	vector<int>true_corre;
@@ -502,14 +499,13 @@ bool registration(const string &name,const string &src_pointcloud, const string 
 		return false;
 	}
 
-	//8.27 构图：一阶兼容性图能够表示节点之间的连接关系，二阶兼容性图能够去除所有没能够形成三元环的边(获得权重的重要信息！！！)
 	start = std::chrono::system_clock::now();
 	Eigen::MatrixXf Graph = Graph_construction(correspondence, resolution, sc2, name, descriptor);
 	end = std::chrono::system_clock::now();
 	elapsed_time = end - start;
 	time_consumption.push_back(elapsed_time.count());
 	total_time += elapsed_time;
-	cout << " graph construction: " << elapsed_time.count() << endl; //需要检验图是否连通？
+	cout << " graph construction: " << elapsed_time.count() << endl; 
 	if (Graph.norm() == 0) {
         cout << "Graph is disconnected." << endl;
 		return false;
@@ -542,7 +538,7 @@ bool registration(const string &name,const string &src_pointcloud, const string 
 		pts_degree.push_back(t);
 	}
 
-	//计算节点聚类系数
+	//evaluate graph
 	start = std::chrono::system_clock::now();
 	vector<Vote> cluster_factor;
 	double sum_fenzi = 0;
@@ -652,14 +648,14 @@ bool registration(const string &name,const string &src_pointcloud, const string 
 	double OTSU = 0;
 	if (cluster_factor[0].score != 0)
 	{
-		OTSU = OTSU_thresh(cluster_coefficients); //得到的阈值超出系数的范围？
+		OTSU = OTSU_thresh(cluster_coefficients); 
 	}
-	double cluster_threshold = min(OTSU, min(average_factor, total_factor)); //问题一：这里的阈值选择能否根据图中点边关系得出？
+	double cluster_threshold = min(OTSU, min(average_factor, total_factor)); 
 
 	cout << cluster_threshold << "->min(" << average_factor << " " << total_factor << " " << OTSU << ")" << endl;
 	cout << " inliers: " << inlier_num << "\ttotal num: " << total_num << "\tinlier ratio: " << inlier_ratio << endl;
-	//OTSU计算权重的阈值
-	double weight_thresh = cluster_threshold; //OTSU_thresh(sorted);
+	
+	double weight_thresh = cluster_threshold; 
 
 	if (add_overlap)
 	{
@@ -680,7 +676,6 @@ bool registration(const string &name,const string &src_pointcloud, const string 
 		weight_thresh = 0;
 	}
 
-	//匹配置信度评分
 	if (!add_overlap || instance_equal)
 	{
 		for (size_t i = 0; i < total_num; i++)
@@ -750,7 +745,7 @@ bool registration(const string &name,const string &src_pointcloud, const string 
 
 		}
 		else {
-			if (cluster_threshold > 3 && correspondence.size() > 50/*max(OTSU, total_factor) > 0.3*/) //减少图规模
+			if (cluster_threshold > 3 && correspondence.size() > 50/*max(OTSU, total_factor) > 0.3*/) //reduce the graph size
 			{
 				double f = 10;
 				while (1)
@@ -796,7 +791,7 @@ bool registration(const string &name,const string &src_pointcloud, const string 
 		const char* att = "weight";
 		EANV(&g, att, &weights);
 		
-		//找出所有最大团
+		//find all maximal cliques
 		igraph_vector_ptr_t cliques;
 		igraph_vector_ptr_init(&cliques, 0);
 		start = std::chrono::system_clock::now();
@@ -814,7 +809,7 @@ bool registration(const string &name,const string &src_pointcloud, const string 
 		}
 		cout << " clique computation: " << elapsed_time.count() << endl;
 
-		//数据清理
+		//clear useless data
 		igraph_destroy(&g);
 		igraph_matrix_destroy(&g_mat);
 		igraph_vector_destroy(&weights);
@@ -841,7 +836,7 @@ bool registration(const string &name,const string &src_pointcloud, const string 
             des_corr_pts->push_back(correspondence[i].des);
 		}
 		
-		/******************************************配准部分***************************************************/
+		/******************************************registraion***************************************************/
 		double RE_thresh, TE_thresh, inlier_thresh;
 		if (name == "KITTI")
 		{
@@ -883,7 +878,7 @@ bool registration(const string &name,const string &src_pointcloud, const string 
 			}
             //igraph_vector_destroy(v);
 			Eigen::Matrix4d est_trans;
-			//团结构评分
+			//evaluate cliques
 			double score = evaluation_trans(Group, correspondence, src_corr_pts, des_corr_pts, weight_thresh, est_trans, inlier_thresh, metric,raw_des_resolution, instance_equal);
 
 			if (GT_cmp_mode)
@@ -897,7 +892,6 @@ bool registration(const string &name,const string &src_pointcloud, const string 
 #pragma omp critical
 					{
 						success_num = success ? success_num + 1 : success_num;
-						//找到最佳
 						if (success && re < RE && te < TE)
 						{
 							RE = re;
@@ -937,7 +931,7 @@ bool registration(const string &name,const string &src_pointcloud, const string 
 		time_consumption.push_back(elapsed_time.count());
 		total_time += elapsed_time;
 		cout << " hypothesis generation & evaluation: " << elapsed_time.count() << endl;
-		//释放内存空间
+		//free memory
 		igraph_vector_ptr_destroy(&cliques);
 		cout << success_num << " : " << total_estimate << " : " << clique_num << endl;
 		Eigen::MatrixXd tmp_best;
@@ -963,28 +957,6 @@ bool registration(const string &name,const string &src_pointcloud, const string 
 			cout << selected[i].score << " ";
 		}
 		cout << endl;
-		/*vector<Vote>clique_number;
-		for (int i = 0; i < total_num; i++)
-		{
-			Vote t;
-			t.index = i;
-			t.score = N_C[i].clique_num;
-			clique_number.push_back(t);
-		}
-		sort(clique_number.begin(), clique_number.end(), compare_vote_score);
-		ofstream out;
-		string outfile = folderPath + "/clique_num.txt";
-		out.open(outfile.c_str(), ios::out);
-		for (int i = 0; i < total_num; i++)
-		{
-			out << clique_number[i].index << " " << clique_number[i].score << " " << true_corre[clique_number[i].index] << endl;
-		}
-		out.close();*/
-		//内存回收
-		/*if (inlier_ratio < 0.05)
-		{
-			Corres_selected_visual(cloud_src, cloud_des, correspondence, resolution, 0.1, GTmat);
-		}*/
 
         if(!no_logs){
             //保存匹配到txt
