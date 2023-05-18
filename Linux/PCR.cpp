@@ -33,7 +33,7 @@ bool compare_corres_score(const Corre_3DMatch& c1, const Corre_3DMatch& c2) {
 
 bool CV_SortByScore(const Corre& v1, const Corre& v2)
 {
-	return v1.score > v2.score;//降序排列
+	return v1.score > v2.score;
 }
 
 double getAngleTwoVectors(const Eigen::Vector3f& v1, const Eigen::Vector3f& v2) {
@@ -45,12 +45,9 @@ void computeCentroidAndCovariance(Corre_3DMatch& c, PointCloudPtr& src_knn, Poin
 	pcl::ConstCloudIterator<pcl::PointXYZ> src_it(*src_knn);
 	pcl::ConstCloudIterator<pcl::PointXYZ> des_it(*des_knn);
 	src_it.reset(); des_it.reset();
-	//计算点云质心
 	Eigen::Vector4f centroid_src, centroid_des;
 	pcl::compute3DCentroid(src_it, centroid_src);
 	pcl::compute3DCentroid(des_it, centroid_des);
-	//计算局部点云协方差矩阵
-	//去除点云质心
 	src_it.reset(); des_it.reset();
 	Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic> src_demean, des_demean;
 	pcl::demeanPointCloud(src_it, centroid_src, src_demean);
@@ -76,7 +73,7 @@ float wasserstein_dis(Corre_3DMatch& c1, Corre_3DMatch &c2)
 
 Eigen::MatrixXf Graph_construction(vector<Corre_3DMatch>& correspondence, float resolution, bool sc2, const string &name, const string &descriptor) {
 	int size = correspondence.size();
-	Eigen::MatrixXf cmp_score; //为了计算性能考虑使用float
+	Eigen::MatrixXf cmp_score;
 	cmp_score.resize(size, size);
 	cmp_score.setZero();
 	Corre_3DMatch c1, c2;
@@ -117,7 +114,7 @@ Eigen::MatrixXf Graph_construction(vector<Corre_3DMatch>& correspondence, float 
 				if (descriptor == "predator" || low_inlieratio)
 				{
 					score = 1 - (dis * dis) / (0.1 * 0.1);
-					if (add_overlap || low_inlieratio) // 0228
+					if (add_overlap || low_inlieratio)
 					{
                         score = (score < 0.99) ? 0 : score; //fpfh/fcgf overlap 0.99
 //                        else {
@@ -170,7 +167,6 @@ Eigen::MatrixXf Graph_construction(vector<Corre_3DMatch>& correspondence, float 
 			for (int j = i + 1; j < size; j++)
 			{
 				c2 = correspondence[j];
-				//计算兼容性分数
 				src_dis = Distance(c1.src, c2.src);
 				des_dis = Distance(c1.des, c2.des);
 				dis = abs(src_dis - des_dis);
@@ -192,7 +188,7 @@ Eigen::MatrixXf Graph_construction(vector<Corre_3DMatch>& correspondence, float 
 
 Eigen::MatrixXf Graph_construction(vector<Corre_3DMatch>& correspondence, float resolution, bool sc2, float cmp_thresh) {
     int size = correspondence.size();
-    Eigen::MatrixXf cmp_score; //为了计算性能考虑使用float
+    Eigen::MatrixXf cmp_score; 
     cmp_score.resize(size, size);
     cmp_score.setZero();
     Corre_3DMatch c1, c2;
@@ -204,7 +200,6 @@ Eigen::MatrixXf Graph_construction(vector<Corre_3DMatch>& correspondence, float 
         for (int j = i + 1; j < size; j++)
         {
             c2 = correspondence[j];
-            //计算兼容性分数
             src_dis = Distance(c1.src, c2.src);
             des_dis = Distance(c1.des, c2.des);
             dis = abs(src_dis - des_dis);
@@ -281,32 +276,29 @@ void weight_SVD(PointCloudPtr& src_pts, PointCloudPtr& des_pts, Eigen::VectorXd&
 	{
 		weights(i) = (weights(i) < weight_threshold) ? 0 : weights(i);
 	}
-	//weights升维度
+	
 	Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> weight;
 	Eigen::VectorXd ones = weights;
 	ones.setOnes();
 	weight = (weights * ones.transpose());
 	Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> Identity = weight;
-	//构建对角阵
+	
 	Identity.setIdentity();
 	weight = (weights * ones.transpose()).cwiseProduct(Identity);
 	pcl::ConstCloudIterator<pcl::PointXYZ> src_it(*src_pts);
 	pcl::ConstCloudIterator<pcl::PointXYZ> des_it(*des_pts);
-	//获取点云质心
+	
 	src_it.reset(); des_it.reset();
 	Eigen::Matrix<double, 4, 1> centroid_src, centroid_des;
 	pcl::compute3DCentroid(src_it, centroid_src);
 	pcl::compute3DCentroid(des_it, centroid_des);
 
-	//去除点云质心
 	src_it.reset(); des_it.reset();
 	Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> src_demean, des_demean;
 	pcl::demeanPointCloud(src_it, centroid_src, src_demean);
 	pcl::demeanPointCloud(des_it, centroid_des, des_demean);
 
-	//计算加权协方差矩阵
 	Eigen::Matrix<double, 3, 3> H = (src_demean * weight * des_demean.transpose()).topLeftCorner(3, 3);
-	//cout << H << endl;
 
 	// Compute the Singular Value Decomposition
 	Eigen::JacobiSVD<Eigen::Matrix<double, 3, 3> > svd(H, Eigen::ComputeFullU | Eigen::ComputeFullV);
@@ -320,7 +312,7 @@ void weight_SVD(PointCloudPtr& src_pts, PointCloudPtr& des_pts, Eigen::VectorXd&
 			v(x, 2) *= -1;
 	}
 
-	Eigen::Matrix<double, 3, 3> R = v * u.transpose(); //正交矩阵的乘积还是正交矩阵，因此R的逆等于R的转置
+	Eigen::Matrix<double, 3, 3> R = v * u.transpose();
 
 	// Return the correct transformation
 	Eigen::Matrix<double, 4, 4> Trans;
@@ -331,7 +323,7 @@ void weight_SVD(PointCloudPtr& src_pts, PointCloudPtr& des_pts, Eigen::VectorXd&
 	trans_Mat = Trans;
 }
 
-void post_refinement(vector<Corre_3DMatch>&correspondence, PointCloudPtr& src_corr_pts, PointCloudPtr& des_corr_pts, Eigen::Matrix4d& initial/* 由最大团生成的变换 */, double& best_score, double inlier_thresh, int iterations, const string &metric) {
+void post_refinement(vector<Corre_3DMatch>&correspondence, PointCloudPtr& src_corr_pts, PointCloudPtr& des_corr_pts, Eigen::Matrix4d& initial, double& best_score, double inlier_thresh, int iterations, const string &metric) {
 	int pointNum = src_corr_pts->points.size();
 	double pre_score = best_score;
 	for (int i = 0; i < iterations; i++)
@@ -581,7 +573,6 @@ void find_largest_clique_of_node(Eigen::MatrixXf& Graph, igraph_vector_ptr_t* cl
 	for (int i = 0; i < remain.size(); i++)
 	{
 		igraph_vector_t* v = (igraph_vector_t*)VECTOR(*cliques)[remain[i]];
-		//计算团的权重
 		float weight = 0;
 		int length = igraph_vector_size(v);
 		for (int j = 0; j < length; j++)
@@ -645,7 +636,7 @@ void find_largest_clique_of_node(Eigen::MatrixXf& Graph, igraph_vector_ptr_t* cl
 //		}
 //		igraph_vector_t* v = (igraph_vector_t*)VECTOR(*cliques)[result[i].clique_index];
 //		int length = igraph_vector_size(v);
-//		Eigen::VectorXi angle_cmp_vector;//保存法向量兼容的匹配个数
+//		Eigen::VectorXi angle_cmp_vector;
 //		angle_cmp_vector.resize(length);
 //		angle_cmp_vector.setZero();
 //		for (int j = 0; j < length; j++)
@@ -681,7 +672,7 @@ void find_largest_clique_of_node(Eigen::MatrixXf& Graph, igraph_vector_ptr_t* cl
 //	remain = after_selection;
 //	after_selection.clear();
 
-	//reduce the number of cliques（控制在 2000）
+	//reduce the number of cliques
 	if (remain.size() > est_num)
 	{
 		vector<int>after_decline;
@@ -706,14 +697,6 @@ void find_largest_clique_of_node(Eigen::MatrixXf& Graph, igraph_vector_ptr_t* cl
 		remain = after_decline;
         clique_score.clear();
 	}
-//	for (int i = 0; i < remain.size(); i++)
-//	{
-//		igraph_vector_t* v = (igraph_vector_t*)VECTOR(*cliques)[remain[i]];
-//		for (int j = 0; j < igraph_vector_size(v); j++)
-//		{
-//			correspondence[VECTOR(*v)[j]].inlier_weight++;
-//		}
-//	}
     delete[] vis;
 	return;
 }
@@ -731,7 +714,7 @@ int Iter_trans_est(PointCloudPtr& cloud_source, PointCloudPtr& cloud_target, flo
 	for (int i = 0; i < Sample_cloud_Idx.size(); i++)
 	{
 		kdtree.nearestKSearch(cloud_source->points[Sample_cloud_Idx[i]], 1, Idx, Dist);
-		if (sqrt(Dist[0]) <= inlier_thresh * mr)//剔除外点
+		if (sqrt(Dist[0]) <= inlier_thresh * mr)
 		{
 			closet_source->points.push_back(cloud_source->points[Sample_cloud_Idx[i]]);
 			closet_target->points.push_back(cloud_target->points[Idx[0]]);
@@ -744,7 +727,6 @@ int Iter_trans_est(PointCloudPtr& cloud_source, PointCloudPtr& cloud_target, flo
 	{
 		residual_error /= closet_source->points.size();
 		residual_error /= mr;
-		//估计变换矩阵
 		pcl::registration::TransformationEstimationSVD<pcl::PointXYZ, pcl::PointXYZ> SVD;
 		SVD.estimateRigidTransformation(*closet_source, *closet_target, Mat);
 	}
