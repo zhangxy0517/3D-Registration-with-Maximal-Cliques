@@ -57,11 +57,9 @@ vector<string> analyse(const string& name, const string& result_scene, const str
 	}
 	vector<string>error_pair;
 
-	//错误数据上测试
 	string error_txt;
 	//error_txt = result_scene + "/error_pair.txt";
 
-	//所有数据上测试
 	if (descriptor == "fpfh" || descriptor == "spinnet" || descriptor == "d3feat")
 	{
 		error_txt = dataset_scene + "/dataload.txt";
@@ -104,7 +102,6 @@ vector<string> analyse(const string& name, const string& result_scene, const str
 		string gt_label = dataset_scene + "/" + pair + (descriptor == "fcgf" ? "@label_fcgf.txt" : "@label.txt");
 		string gt_mat_path = dataset_scene + "/" + pair + (descriptor == "fcgf" ? "@GTmat_fcgf.txt" : "@GTmat.txt");
 
-		//调用 源.cpp
 		//string ov_label = "NULL";
         string ov_label = dataset_scene + "/" + pair + "@gt_ov.txt";
 		double re, te, inlier_num, total_num, inlier_ratio, success_estimate, total_estimate;
@@ -212,10 +209,10 @@ int main(int argc, char** argv) {
     low_inlieratio = false;
     no_logs = false;
     int id = 0;
-    string resultPath; //程序生成文件的保存目录
-    string datasetPath; //数据集路径
-    string datasetName; //数据集名称
-    string descriptor; //描述子
+    string resultPath; 
+    string datasetPath; 
+    string datasetName; 
+    string descriptor; 
     //////////////////////////////////////////////////////////////////
     int opt;
     int digit_opind = 0;
