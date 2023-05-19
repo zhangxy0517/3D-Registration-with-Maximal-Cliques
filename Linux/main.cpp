@@ -295,7 +295,7 @@ int main(int argc, char** argv) {
 	vector<int> scene_correct_num;
 	vector<double>scene_re_sum;
 	vector<double>scene_te_sum;
-	if (!no_logs && access(resultPath.c_str(), 0))
+	if (access(resultPath.c_str(), 0))
 	{
 		if (mkdir(resultPath.c_str(),S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) != 0) {
 			cout << " Create save folder failed! " << endl;
