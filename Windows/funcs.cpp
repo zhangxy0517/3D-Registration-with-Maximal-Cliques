@@ -5,24 +5,14 @@
 #include <pcl/point_types.h>
 #include <pcl/registration/transforms.h>
 #define BOOST_TYPEOF_EMULATION
-#include <pcl/registration/icp.h>
-#include <pcl/registration/icp_nl.h>
 #include <pcl/kdtree/kdtree_flann.h>
-//#include <pcl/kdtree/impl/kdtree_flann.hpp>
 #include <pcl/features/normal_3d.h>
 #include <pcl/features/shot.h>
-#include <pcl/features/shot_lrf.h>
-#include <pcl/keypoints/harris_3d.h>
-#include <pcl/keypoints/uniform_sampling.h>
 #include <pcl/registration/transformation_estimation_svd.h>
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/surface/gp3.h>
 #include <pcl/surface/mls.h>
-#include <pcl/common/centroid.h>
-#include <pcl/common/eigen.h>
-#include <boost/thread/thread.hpp>
 #include <pcl/visualization/pcl_visualizer.h>
-#include <pcl/visualization/cloud_viewer.h>
 #include "Eva.h"
 /*******************************************************************************dataload********************************************************/
 int XYZorMeshlabPly_Read(string Filename, PointCloudPtr& cloud)
@@ -239,7 +229,56 @@ float MeshResolution_mr_compute(PointCloudPtr& cloud)
 //	fclose(fp);
 //}
 
+int Voxel_grid_downsample(pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud, pcl::PointCloud<pcl::PointXYZ>::Ptr& new_cloud,
+                      float leaf_size) {
+    pcl::VoxelGrid<pcl::PointXYZ> sor;
+    sor.setInputCloud(cloud);
+    sor.setLeafSize(leaf_size, leaf_size, leaf_size);
+    sor.filter(*new_cloud);
+    return 0;
+}
 /*******************************************************************************Feature match********************************************************/
+void feature_matching(PointCloudPtr& cloud_source, PointCloudPtr& cloud_target,
+                      vector<vector<float>>& feature_source, vector<vector<float>>& feature_target, vector<Corre_3DMatch>& Corres)
+{
+    int i, j;
+    pcl::PointCloud<pcl::SHOT352>::Ptr Feature_source(new pcl::PointCloud<pcl::SHOT352>);
+    pcl::PointCloud<pcl::SHOT352>::Ptr Feature_target(new pcl::PointCloud<pcl::SHOT352>);
+    Feature_source->points.resize(feature_source.size());
+    Feature_target->points.resize(feature_target.size());
+    for (i = 0; i < feature_source.size(); i++)
+    {
+        for (j = 0; j < 352; j++)
+        {
+            if (j < feature_source[i].size()) Feature_source->points[i].descriptor[j] = feature_source[i][j];
+            else Feature_source->points[i].descriptor[j] = 0;
+        }
+    }
+    for (i = 0; i < feature_target.size(); i++)
+    {
+        for (j = 0; j < 352; j++)
+        {
+            if (j < feature_target[i].size()) Feature_target->points[i].descriptor[j] = feature_target[i][j];
+            else Feature_target->points[i].descriptor[j] = 0;
+        }
+    }
+    //
+    pcl::KdTreeFLANN<pcl::SHOT352> kdtree;
+    vector<int>Idx;
+    vector<float>Dist;
+    kdtree.setInputCloud(Feature_target);
+    for (i = 0; i < Feature_source->points.size(); i++)
+    {
+        kdtree.nearestKSearch(Feature_source->points[i], 1, Idx, Dist);
+        Corre_3DMatch temp;
+        temp.src_index = i;
+        temp.des_index = Idx[0];
+        temp.src = cloud_source->points[i];
+        temp.des = cloud_target->points[Idx[0]];
+        temp.score = 1 - sqrt(Dist[0]);
+        Corres.push_back(temp);
+    }
+}
 void feature_matching(PointCloudPtr& cloud_source, PointCloudPtr& cloud_target, vector<LRF>LRFs_source, vector<LRF>LRFs_target,
 	vector<int>& Idx_source, vector<int>& Idx_target, vector<vector<float>>& feature_source, vector<vector<float>>& feature_target, vector<Corre>& Corres)
 {
@@ -277,7 +316,7 @@ void feature_matching(PointCloudPtr& cloud_source, PointCloudPtr& cloud_target, 
 		temp.target_idx = Idx_target[Idx[0]];
 		temp.source_LRF = LRFs_source[i];
 		temp.target_LRF = LRFs_target[Idx[0]];
-		temp.score = 1 - sqrt(Dist[0]);
+		temp.score = 0;
 		Corres.push_back(temp);
 	}
 }

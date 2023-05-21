@@ -5,14 +5,9 @@
 #include <pcl/point_types.h>
 #include <pcl/registration/transforms.h>
 #include <pcl/kdtree/kdtree_flann.h>
-//#include <pcl/kdtree/impl/kdtree_flann.hpp>
-#include <pcl/features/normal_3d.h>
-#include <pcl/registration/transformation_estimation_svd.h>
-#include <pcl/filters/voxel_grid.h>
-#include <pcl/common/centroid.h>
-#include <pcl/common/eigen.h>
 #include <boost/thread/thread.hpp>
 #include <pcl/visualization/pcl_visualizer.h>
+#include <windows.h>
 #include "Eva.h"
 void prseodu_color(float max_value, vector<float>scores, vector<Vertex>& RGB)
 {
@@ -156,7 +151,7 @@ void visualization(PointCloudPtr cloud_src, PointCloudPtr cloud_tar, /*PointClou
 {
 	//cout << "visu resolution=" << resolution << endl;
 	//visulization
-	pcl::visualization::PCLVisualizer viewer("RANSAC");
+	pcl::visualization::PCLVisualizer viewer("Registration");
 	pcl::visualization::PointCloudColorHandlerCustom< pcl::PointXYZ> cloud_color_handler_src(cloud_src, sR, sG, sB);
 	pcl::visualization::PointCloudColorHandlerCustom< pcl::PointXYZ> cloud_color_handler_tar(cloud_tar, tR, tG, tB);
 	//pcl::visualization::PointCloudColorHandlerCustom< pcl::PointXYZ> keyPoint_color_handler_src(keyPoint_src, 0, 255, 0);
@@ -164,7 +159,6 @@ void visualization(PointCloudPtr cloud_src, PointCloudPtr cloud_tar, /*PointClou
 	//Add pointcloud
 	viewer.addPointCloud(cloud_src, cloud_color_handler_src, "cloud_src");
 	viewer.addPointCloud(cloud_tar, cloud_color_handler_tar, "cloud_tar");
-
 	//Add keyPoint
 	//viewer.addPointCloud(keyPoint_src, keyPoint_color_handler_src, "keyPoint_src");
 	//viewer.addPointCloud(keyPoint_tar, keyPoint_color_handler_tar, "keyPoint_tar");
@@ -179,7 +173,8 @@ void visualization(PointCloudPtr cloud_src, PointCloudPtr cloud_tar, /*PointClou
 	//	viewer.addLine< pcl::PointXYZ, pcl::PointXYZ>(cloud_src->points[idx1], cloud_tar->points[idx2], 0, 255, 0, SS_line_b.str());
 	//}
 	//viewer.addSphere<pcl::PointXYZ>(cloud_src->points[500], 5 * resolution, "sphere", 0);
-	viewer.setBackgroundColor(255, 255, 255);
+	viewer.setBackgroundColor(0, 0, 0);
+    viewer.addText("Before registration\n", 10, 15, 20, 255, 255, 255, "info_1");
 	viewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1, "cloud_src");
 
 	// Set camera position and orientation
@@ -187,6 +182,7 @@ void visualization(PointCloudPtr cloud_src, PointCloudPtr cloud_tar, /*PointClou
 	//viewer.setSize(1280, 1024);
 	//transform
 	viewer.registerKeyboardCallback(&keyboardEventOccurred, (void*)NULL);
+    cout << "Press space to register." << endl;
 	while (!viewer.wasStopped())
 	{
 		viewer.spinOnce();
@@ -196,6 +192,7 @@ void visualization(PointCloudPtr cloud_src, PointCloudPtr cloud_tar, /*PointClou
 			pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_trans_src(new pcl::PointCloud<pcl::PointXYZ>);
 			viewer.removeAllShapes();
 			viewer.removePointCloud("cloud_src");
+            viewer.updateText("After registration\n", 10, 15, 20, 255, 255, 255, "info_1");
 			pcl::transformPointCloud(*cloud_src, *cloud_trans_src, Mat);
 			viewer.addPointCloud(cloud_trans_src, cloud_color_handler_src, "cloud_trans_src");
 			//viewer.removePointCloud("keyPoint_src");
@@ -204,6 +201,7 @@ void visualization(PointCloudPtr cloud_src, PointCloudPtr cloud_tar, /*PointClou
 		}
 		next_iteration = false;
 	}
+    this_thread::sleep_for(100ms);
 	//system("pause");
 }
 //point-wise ijumerror_map
@@ -332,9 +330,9 @@ void Corres_Viewer_Score(PointCloudPtr cloud_s, PointCloudPtr cloud_t, vector<Co
 		cloud_add->points[i].x -= center_x; cloud_add->points[i].y -= center_y; cloud_add->points[i].z -= center_z;
 	}
 	//boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer_rgb;
-	pcl::visualization::PCLVisualizer viewer("match viewer");
+	pcl::visualization::PCLVisualizer viewer("Selected matches");
 	viewer.addPointCloud(cloud_add, "cloud_view");
-	viewer.setBackgroundColor(255, 255, 255);
+	viewer.setBackgroundColor(0, 0, 0);
 	float pointsize = 1;
 	viewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, pointsize, "cloud_view");
 	//
@@ -350,44 +348,44 @@ void Corres_Viewer_Score(PointCloudPtr cloud_s, PointCloudPtr cloud_t, vector<Co
 
 		float r, g, b;
 		float val = Hist_match[i].score * 255 / max_value;
-		//red  
+		//green
 		if (val < 128)
 		{
-			r = 0;
+			g = 0;
 		}
 		else if (val < 192)
 		{
-			r = 255.0f / 64 * (val - 128);
+			g = 255.0f / 64 * (val - 128);
 		}
 		else
 		{
-			r = 255.0f;
+			g = 255.0f;
 		}
-		//green  
+		//blue
 		if (val < 64)
 		{
-			g = 255.0 / 64 * val;
+			b = 255.0 / 64 * val;
 		}
 		else if (val < 192)
-		{
-			g = 255.0;
-		}
-		else
-		{
-			g = -255.0 / 63 * (val - 192) + 255;
-		}
-		//blue  
-		if (val < 64)
 		{
 			b = 255.0;
 		}
+		else
+		{
+			b = -255.0 / 63 * (val - 192) + 255;
+		}
+		//red
+		if (val < 64)
+		{
+			r = 255.0;
+		}
 		else if (val < 128)
 		{
-			b = -255.0 / 63 * (val - 64) + 255;
+			r = -255.0 / 63 * (val - 64) + 255;
 		}
 		else
 		{
-			b = 0.0;
+			r = 0.0;
 		}
 		Vertex temp;
 		temp.x = r; temp.y = g; temp.z = b;
@@ -419,6 +417,7 @@ void Corres_Viewer_Score(PointCloudPtr cloud_s, PointCloudPtr cloud_t, vector<Co
 	while (!viewer.wasStopped())
 	{
 		viewer.spinOnce();
+        this_thread::sleep_for(100ms);
 	}
 }
 //initial correspondence visualization

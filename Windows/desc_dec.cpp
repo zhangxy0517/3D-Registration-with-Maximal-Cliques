@@ -4,27 +4,18 @@
 #include <time.h>
 #include <algorithm>
 #include <pcl/point_types.h>
+#include <pcl/features/fpfh_omp.h>
 #include <pcl/registration/transforms.h>
 #define BOOST_TYPEOF_EMULATION
-#include <pcl/registration/icp.h>
-#include <pcl/registration/icp_nl.h>
-#include<pcl/io/pcd_io.h>
 #include <pcl/kdtree/kdtree_flann.h>
-//#include <pcl/kdtree/impl/kdtree_flann.hpp>
-#include <pcl/features/normal_3d.h>
+#include <pcl/features/normal_3d_omp.h>
 #include <pcl/features/shot.h>
 #include <pcl/features/shot_lrf.h>
 #include <pcl/keypoints/harris_3d.h>
-#include <pcl/keypoints/uniform_sampling.h>
-#include <pcl/registration/transformation_estimation_svd.h>
-#include <pcl/filters/voxel_grid.h>
-#include <pcl/surface/gp3.h>
 #include <pcl/surface/mls.h>
 #include <pcl/common/centroid.h>
 #include <pcl/common/eigen.h>
-#include <boost/thread/thread.hpp>
 #include <pcl/visualization/pcl_visualizer.h>
-#include <pcl/visualization/cloud_viewer.h>
 #include<pcl/keypoints/iss_3d.h>
 #include "Eva.h"
 /*******************************************************************************Descriptor********************************************************/
@@ -35,7 +26,7 @@ void SHOT_compute(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, vector<int> indices
 	for (j = 0; j<indices.size(); j++)
 		Idx->indices.push_back(indices[j]);
 	
-	pcl::NormalEstimation<pcl::PointXYZ, pcl::Normal> n;
+	pcl::NormalEstimationOMP<pcl::PointXYZ, pcl::Normal> n;
 	pcl::PointCloud<pcl::Normal>::Ptr normals(new pcl::PointCloud<pcl::Normal>);
 	pcl::search::KdTree<pcl::PointXYZ>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZ>);
 	tree->setInputCloud(cloud);
@@ -705,6 +696,85 @@ void Harris3D_detector(PointCloudPtr cloud, float NMS_radius, vector<int>&key_in
 		kdtree.nearestKSearch(_keypoints->points[i], 1, Idx, Dist);
 		key_indices.push_back(Idx[0]);
 	}
+}
+void FPFH_descriptor(pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud, std::vector<int>& indices,
+                     float sup_radius, std::vector<std::vector<float>>& features){
+    int i, j;
+    //pcl::PointIndicesPtr Idx = std::make_shared<pcl::PointIndices>();
+    pcl::PointIndicesPtr Idx = boost::shared_ptr<pcl::PointIndices>();
+    for (j = 0; j < indices.size(); j++)
+        Idx->indices.push_back(indices[j]);
+    pcl::NormalEstimationOMP<pcl::PointXYZ, pcl::Normal> n;
+    pcl::PointCloud<pcl::Normal>::Ptr normals(new pcl::PointCloud<pcl::Normal>);
+    pcl::search::KdTree<pcl::PointXYZ>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZ>);
+    tree->setInputCloud(cloud);
+    n.setInputCloud(cloud);
+    n.setSearchMethod(tree);
+    n.setRadiusSearch(sup_radius / 4);
+    n.compute(*normals);
+    // Create the FPFH estimation class, and pass the input dataset+normals to it
+    pcl::FPFHEstimationOMP<pcl::PointXYZ, pcl::Normal, pcl::FPFHSignature33> fpfh;
+    fpfh.setInputCloud (cloud);
+    fpfh.setInputNormals (normals);
+    // alternatively, if cloud is of tpe PointNormal, do fpfh.setInputNormals (cloud);
+
+    // Create an empty kdtree representation, and pass it to the FPFH estimation object.
+    // Its content will be filled inside the object, based on the given input dataset (as no other search surface is given).
+
+    fpfh.setSearchMethod (tree);
+    fpfh.setIndices(Idx);
+    // Output datasets
+    pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfhs (new pcl::PointCloud<pcl::FPFHSignature33> ());
+
+    // Use all neighbors in a sphere of radius 5cm
+    // IMPORTANT: the radius used here has to be larger than the radius used to estimate the surface normals!!!
+    fpfh.setRadiusSearch (sup_radius);
+
+    // Compute the features
+    fpfh.compute (*fpfhs);
+    features.resize(fpfhs->points.size());
+    for(i = 0; i < features.size(); i++){
+        features[i].resize(33);
+        for(j = 0; j < 33; j++){
+            features[i][j] = fpfhs->points[i].histogram[j];
+        }
+    }
+}
+void FPFH_descriptor(pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud, float sup_radius, std::vector<std::vector<float>>& features){
+    int i, j;
+    pcl::NormalEstimationOMP<pcl::PointXYZ, pcl::Normal> n;
+    pcl::PointCloud<pcl::Normal>::Ptr normals(new pcl::PointCloud<pcl::Normal>);
+    pcl::search::KdTree<pcl::PointXYZ>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZ>);
+    tree->setInputCloud(cloud);
+    n.setInputCloud(cloud);
+    n.setSearchMethod(tree);
+    n.setRadiusSearch(sup_radius / 4);
+    n.compute(*normals);
+    // Create the FPFH estimation class, and pass the input dataset+normals to it
+    pcl::FPFHEstimationOMP<pcl::PointXYZ, pcl::Normal, pcl::FPFHSignature33> fpfh;
+    fpfh.setInputCloud (cloud);
+    fpfh.setInputNormals (normals);
+    // alternatively, if cloud is of tpe PointNormal, do fpfh.setInputNormals (cloud);
+
+    // Create an empty kdtree representation, and pass it to the FPFH estimation object.
+    // Its content will be filled inside the object, based on the given input dataset (as no other search surface is given).
+    fpfh.setSearchMethod (tree);
+    // Output datasets
+    pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfhs (new pcl::PointCloud<pcl::FPFHSignature33> ());
+
+    // Use all neighbors in a sphere of radius 5cm
+    // IMPORTANT: the radius used here has to be larger than the radius used to estimate the surface normals!!!
+    fpfh.setRadiusSearch (sup_radius);
+
+    // Compute the features
+    fpfh.compute (*fpfhs);
+    features.resize(fpfhs->points.size());
+    for(i = 0; i < features.size(); i++){
+        features[i].resize(33);
+        for(j = 0; j < 33; j++){
+            features[i][j] = fpfhs->points[i].histogram[j];
+        }
+    }
 }
 vector<int> removeInvalidPoint(PointCloudPtr cloud_in, vector<int> &keyPointIdx, float resolution)
 {
