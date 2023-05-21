@@ -190,7 +190,7 @@ double calculate_rotation_error(Eigen::Matrix3d& est, Eigen::Matrix3d& gt);
 double calculate_translation_error(Eigen::Vector3d& est, Eigen::Vector3d& gt);
 void sort_row(MatD& matrix, MatD& sorted_matrix, Eigen::MatrixXi& index);
 void weight_SVD(PointCloudPtr& src_pts, PointCloudPtr& des_pts, Eigen::VectorXd& weights, double weight_threshold, Eigen::Matrix4d& trans_Mat);
-double evaluation_trans(vector<Corre_3DMatch>& Match, vector<Corre_3DMatch>& correspondence, PointCloudPtr& src_corr_pts, PointCloudPtr& des_corr_pts, double weight_thresh, Eigen::Matrix4d& trans, double metric_thresh, const string &metric, float resolution);
+double evaluation_trans(vector<Corre_3DMatch>& Match, vector<Corre_3DMatch>& correspondence, PointCloudPtr& src_corr_pts, PointCloudPtr& des_corr_pts, double weight_thresh, Eigen::Matrix4d& trans, double metric_thresh, const string &metric, float resolution, bool instance_equal);
 bool evaluation_est(Eigen::Matrix4d est, Eigen::Matrix4d gt, double re_thresh, double te_thresh, double& RE, double& TE);
 void print_and_destroy_cliques(igraph_vector_ptr_t* cliques);
 void find_largest_clique_of_node(Eigen::MatrixXf& Graph, igraph_vector_ptr_t* cliques, vector<Corre_3DMatch>& correspondence, node_cliques* result, vector<int>& remain, int num_node, int est_num, string descriptor);
