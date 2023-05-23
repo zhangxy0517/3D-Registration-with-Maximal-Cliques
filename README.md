@@ -47,6 +47,7 @@ All tested datasets can be found at this [link](https://zxy517-my.sharepoint.com
 
 ## Results
 ### U3M
+![](figures/vary_reg.png)
 
 ### 3DMatch & 3DLoMatch
 |    Benchmark   | RR(%) | RE(°) |TE(cm) |
@@ -63,7 +64,7 @@ All tested datasets can be found at this [link](https://zxy517-my.sharepoint.com
 |  FCGF+MAC  | 97.84 | 0.34  | 19.34  |
 
 ### Performance boosting
-
+![](figures/table.png)
 
 ## Citation
 If you find this code useful for your work or use it in your project, please consider citing:
