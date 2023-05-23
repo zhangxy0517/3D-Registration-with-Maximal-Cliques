@@ -48,6 +48,7 @@ All tested datasets can be found at this [link](https://zxy517-my.sharepoint.com
 ## Results
 ### U3M
 ![](figures/vary_reg.png)
+<img src="https://github.com/zhangxy0517/3D-Registration-with-Maximal-Cliques/tree/main/figures/vary_reg.png" width="100px">
 
 ### 3DMatch & 3DLoMatch
 |    Benchmark   | RR(%) | RE(°) |TE(cm) |
