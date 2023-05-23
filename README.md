@@ -37,8 +37,8 @@ We provide a simple demo in python, please refer to [Python_implement](https://g
 * `--descriptor`[fpfh/fcgf/spinnet/predator] descriptor name. 
 * `--start_index`(begin from 0) run from given index. 
 ### Optional args:
-:* `--lowInlierRatio` run test on the LoInlierRatio dataset.
-:* `--add_overlap` add the overlap input.
+[//]:# * `--lowInlierRatio` run test on the LoInlierRatio dataset.
+[//]:# * `--add_overlap` add the overlap input.
 * `--no_logs` forbid generation of log files.
 
 ## Datasets
