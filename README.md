@@ -39,14 +39,7 @@ We provide a simple demo in python, please refer to [Python_implement](https://g
 * `--no_logs` forbid generation of log files.
 
 ## Datasets
-### U3M
-
-### 3DMatch & 3DLoMatch
-
-### KITTI
-
-### ETH
-
+All tested datasets can be found at this [link](https://zxy517-my.sharepoint.com/:f:/g/personal/xy_zhang_zxy517_onmicrosoft_com/EospuCxhcKVGhH0BbCMsHlIBDaLjlHqfFPFB1KCo3wXEJA?e=hK6Gsd)
 
 ## Results
 
