@@ -1,4 +1,4 @@
-# 3D Registration with Maximal Cliques
+# 3D Registration with Maximal Cliques (CVPR23 best paper candidate)
 Source code of [3D Registration with Maximal Cliques](https://arxiv.org/abs/2305.10854).  
 
 ## Introduction  
