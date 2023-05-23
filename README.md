@@ -12,6 +12,7 @@ the best hypothesis is used to perform registration. Extensive experiments on U3
 The repository contains a set of subfolders:  
 * [`Linux`](https://github.com/zhangxy0517/3D-Registration-with-Maximal-Cliques/tree/main/Linux) - source code for Linux platform.  
 * [`Windows`](https://github.com/zhangxy0517/3D-Registration-with-Maximal-Cliques/tree/main/Windows) - source code for Windows platform.
+* [`Python_implement`](https://github.com/zhangxy0517/3D-Registration-with-Maximal-Cliques/tree/main/Python_implement) - python implementation of basic MAC.
 * [`demo`](https://github.com/zhangxy0517/3D-Registration-with-Maximal-Cliques/tree/main/demo) - test point clouds.
 
 
