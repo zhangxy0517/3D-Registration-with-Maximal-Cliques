@@ -59,8 +59,8 @@ All tested datasets can be found at this [link](https://zxy517-my.sharepoint.com
 ### KITTI
 |    Benchmark   | RR(%) | RE(°) |TE(cm) |
 |:---------------|:-----:|:-----:|:-----:|
-|  FPFH+MAC  | 84.10 | 1.96  | 6.18  |
-|  FCGF+MAC  | 93.72 | 1.89  | 6.03  |
+|  FPFH+MAC  | 99.46 | 0.40  | 8.46  |
+|  FCGF+MAC  | 97.84 | 0.34  | 19.34  |
 
 ### Performance boosting
 
