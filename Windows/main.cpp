@@ -210,8 +210,6 @@ int main(int argc, char** argv) {
             {"dataset_name", required_argument, NULL, 'n'},
             {"descriptor", required_argument, NULL, 'd'},
             {"start_index", required_argument, NULL, 's'},
-            {"lowInlierRatio", optional_argument, NULL, 'l'},
-            {"add_overlap", optional_argument, NULL, 'a'},
             {"no_logs", optional_argument, NULL, 'g'},
             {"help", optional_argument, NULL, 'h'},
             {"demo", optional_argument, NULL, 'm'},
@@ -234,12 +232,6 @@ int main(int argc, char** argv) {
                 break;
             case 'd':
                 descriptor = optarg;
-                break;
-            case 'l':
-                low_inlieratio = true;
-                break;
-            case 'a':
-                add_overlap = true;
                 break;
             case 'g':
                 no_logs = true;
