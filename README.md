@@ -46,11 +46,12 @@ We provide a simple demo in python, please refer to [Python_implement](https://g
 All tested datasets can be found at this [link](https://zxy517-my.sharepoint.com/:f:/g/personal/xy_zhang_zxy517_onmicrosoft_com/EospuCxhcKVGhH0BbCMsHlIBDaLjlHqfFPFB1KCo3wXEJA?e=hK6Gsd)
 
 ## Results
-* U3M
+### U3M
 
 <img src="https://github.com/zhangxy0517/3D-Registration-with-Maximal-Cliques/blob/main/figures/vary_reg.png" width="600px">
 
-* 3DMatch & 3DLoMatch
+### 3DMatch & 3DLoMatch
+
 |    Benchmark   | RR(%) | RE(°) |TE(cm) |
 |:---------------|:-----:|:-----:|:-----:|
 |  3DMatch+FPFH+MAC  | 84.10 | 1.96  | 6.18  |
@@ -58,13 +59,14 @@ All tested datasets can be found at this [link](https://zxy517-my.sharepoint.com
 |  3DLoMatch+FPFH+MAC  | 40.88 | 3.66  | 9.45  |
 |  3DLoMatch+FCGF+MAC  | 59.85 | 3.50  | 9.75  |
 
-* KITTI
+### KITTI
+
 |    Benchmark   | RR(%) | RE(°) |TE(cm) |
 |:---------------|:-----:|:-----:|:-----:|
 |  FPFH+MAC  | 99.46 | 0.40  | 8.46  |
 |  FCGF+MAC  | 97.84 | 0.34  | 19.34  |
 
-* Performance boosting
+### Performance boosting
 
 <img src="https://github.com/zhangxy0517/3D-Registration-with-Maximal-Cliques/blob/main/figures/table.png" width="600px">
 
