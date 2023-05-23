@@ -48,7 +48,7 @@ All tested datasets can be found at this [link](https://zxy517-my.sharepoint.com
 ## Results
 ### U3M
 
-<img src="https://github.com/zhangxy0517/3D-Registration-with-Maximal-Cliques/blob/main/figures/vary_reg.png" width="300px">
+<img src="https://github.com/zhangxy0517/3D-Registration-with-Maximal-Cliques/blob/main/figures/vary_reg.png" width="600px">
 
 ### 3DMatch & 3DLoMatch
 |    Benchmark   | RR(%) | RE(°) |TE(cm) |
@@ -65,7 +65,8 @@ All tested datasets can be found at this [link](https://zxy517-my.sharepoint.com
 |  FCGF+MAC  | 97.84 | 0.34  | 19.34  |
 
 ### Performance boosting
-![](figures/table.png)
+
+<img src="https://github.com/zhangxy0517/3D-Registration-with-Maximal-Cliques/blob/main/figures/table.png" width="600px">
 
 ## Citation
 If you find this code useful for your work or use it in your project, please consider citing:
