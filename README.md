@@ -10,7 +10,6 @@ The repository contains a set of subfolders:
 * [`Linux`](https://github.com/zhangxy0517/3D-Registration-with-Maximal-Cliques/tree/main/Linux) - source code for Linux platform.  
 * [`Windows`](https://github.com/zhangxy0517/3D-Registration-with-Maximal-Cliques/tree/main/Windows) - source code for Windows platform.
 * [`demo`](https://github.com/zhangxy0517/3D-Registration-with-Maximal-Cliques/tree/main/demo) - test point clouds.
-* [`LoInlierRatio`](https://github.com/zhangxy0517/3D-Registration-with-Maximal-Cliques/tree/main/LoInlierRatio) - Download links for LoInlierRatio dataset.
 
 
 ## Build
