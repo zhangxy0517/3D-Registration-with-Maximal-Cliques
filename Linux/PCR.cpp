@@ -122,12 +122,6 @@ Eigen::MatrixXf Graph_construction(vector<Corre_3DMatch>& correspondence, float 
 //                            score = exp(-dis * dis / (2 * alpha_dis * alpha_dis));
 //                            score = (score < 0.999) ? 0 : score;
 //                        }
-						//if (score > 0)
-						//{
-						//	double wasserstein_tmp = wasserstein_dis(c1, c2) > 0.9 ? wasserstein_dis(c1, c2) : 0;
-						//	//score = wasserstein_tmp > 0 ? (score + wasserstein_tmp) : 0;
-						//	score += wasserstein_tmp;
-						//}
 // mac-op 250 500 1000 2500 5000
 //        0.9 0.95 0.99 0.995 0.999
 					}

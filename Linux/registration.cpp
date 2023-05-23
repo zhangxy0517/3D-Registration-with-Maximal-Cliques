@@ -72,7 +72,7 @@ bool registration(const string &name,const string &src_pointcloud, const string 
 	bool GT_cmp_mode = false;
 	int max_est_num = INT_MAX;
 	bool ransc_original = false;
-    bool instance_equal = false;
+    bool instance_equal = true;
 	string metric = "MAE";
 
 	success_num = 0;
@@ -331,49 +331,8 @@ bool registration(const string &name,const string &src_pointcloud, const string 
 					idx++;
 				}
 				fclose(corr);
-/*				if (add_overlap)
-				{
-					string raw_src_file = dataPath + "/" + item_name + "_raw_src.pcd";
-					string raw_des_file = dataPath + "/" + item_name + "_raw_des.pcd";
-					if (pcl::io::loadPCDFile(raw_des_file.c_str(), *Raw_des) < 0)
-					{
-						cout << "error in loading raw_des.pcd" << endl;
-						exit(-1);
 					}
-					if (pcl::io::loadPCDFile(raw_src_file.c_str(), *Raw_src) < 0)
-					{
-						cout << "error in loading raw_src.pcd" << endl;
-						exit(-1);
 					}
-					//kdtree_Overlap_src.setInputCloud(Raw_src);
-					//kdtree_Overlap_des.setInputCloud(Raw_des);
-					raw_des_resolution = MeshResolution_mr_compute(Raw_des);
-					raw_src_resolution = MeshResolution_mr_compute(Raw_src);
-					resolution = (raw_src_resolution + raw_des_resolution) / 2;
-//#pragma omp parallel for
-//					for (int i = 0; i < correspondence.size(); i++)
-//					{
-//						Corre_3DMatch* t = &correspondence[i];
-//						PointCloudPtr src_knn(new(pcl::PointCloud<pcl::PointXYZ>));
-//						PointCloudPtr des_knn(new(pcl::PointCloud<pcl::PointXYZ>));
-//						vector<int>src_ind(21), des_ind(21);
-//						vector<float>src_dis(21), des_dis(21);
-//						kdtree_Overlap_src.nearestKSearch(t->src, 21, src_ind, src_dis);
-//						kdtree_Overlap_des.nearestKSearch(t->des, 21, des_ind, des_dis);
-//						pcl::copyPointCloud(*Raw_src, src_ind, *src_knn);
-//						pcl::copyPointCloud(*Raw_des, des_ind, *des_knn);
-//						computeCentroidAndCovariance(*t, src_knn, des_knn);
-//                        src_knn.reset(new (pcl::PointCloud<pcl::PointXYZ>));
-//                        des_knn.reset(new (pcl::PointCloud<pcl::PointXYZ>));
-//                        src_ind.clear();
-//                        des_ind.clear();
-//                        src_dis.clear();
-//                        des_dis.clear();
-//					}
-//					cout << "number of query points: " << Overlap_src->points.size() << endl;
-				}*/
-			}
-		}
 		else {
 			exit(-1);
 		}

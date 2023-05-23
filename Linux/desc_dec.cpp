@@ -22,7 +22,7 @@
 void SHOT_compute(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, vector<int> indices, float sup_radius, vector<vector<float>>&features, vector<LRF>&LRFs)
 {
 	int i, j;
-	pcl::PointIndicesPtr Idx = std::make_shared<pcl::PointIndices>();
+	pcl::PointIndicesPtr Idx = boost::shared_ptr<pcl::PointIndices>();
 	for (j = 0; j<indices.size(); j++)
 		Idx->indices.push_back(indices[j]);
 	
@@ -700,7 +700,8 @@ void Harris3D_detector(PointCloudPtr cloud, float NMS_radius, vector<int>&key_in
 void FPFH_descriptor(pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud, std::vector<int>& indices,
                      float sup_radius, std::vector<std::vector<float>>& features){
     int i, j;
-    pcl::PointIndicesPtr Idx = std::make_shared<pcl::PointIndices>();
+    //pcl::PointIndicesPtr Idx = std::make_shared<pcl::PointIndices>();
+    pcl::PointIndicesPtr Idx = boost::shared_ptr<pcl::PointIndices>();
     for (j = 0; j < indices.size(); j++)
         Idx->indices.push_back(indices[j]);
     pcl::NormalEstimationOMP<pcl::PointXYZ, pcl::Normal> n;

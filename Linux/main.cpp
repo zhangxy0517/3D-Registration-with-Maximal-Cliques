@@ -102,8 +102,7 @@ vector<string> analyse(const string& name, const string& result_scene, const str
 		string gt_label = dataset_scene + "/" + pair + (descriptor == "fcgf" ? "@label_fcgf.txt" : "@label.txt");
 		string gt_mat_path = dataset_scene + "/" + pair + (descriptor == "fcgf" ? "@GTmat_fcgf.txt" : "@GTmat.txt");
 
-		//string ov_label = "NULL";
-        string ov_label = dataset_scene + "/" + pair + "@gt_ov.txt";
+		string ov_label = "NULL";
 		double re, te, inlier_num, total_num, inlier_ratio, success_estimate, total_estimate;
 		int corrected = registration(name, src_filename, des_filename, corr_path, gt_label, ov_label, gt_mat_path, result_folder, re, te, inlier_num, total_num, inlier_ratio, success_estimate, total_estimate, descriptor, time);
 		int iter = iters;
@@ -155,19 +154,7 @@ void demo(){
 
     vector<double>ov_lable;
     ov_lable.resize((int)correspondence.size());
-    if(add_overlap){
-        string ov_path = "demo/ov.txt";
-        FILE *fp = fopen(ov_path.c_str(), "r");
-        int ind= 0;
-        while(!feof(fp)){
-            double tmp;
-            fscanf(fp, "%lf\n", &tmp);
-            ov_lable[ind] = tmp;
-            ind++;
-        }
-        fclose(fp);
-    }
-
+    
     folderPath = "demo/result";
     cout << "Start registration." << endl;
     registration(src_cloud, des_cloud, correspondence, ov_lable, folderPath, resolution,0.99);
@@ -198,8 +185,6 @@ void usage(){
     cout << "\t\t--descriptor\tdescriptor name. [fpfh/fcgf/spinnet/predator]" << endl;
     cout << "\t\t--start_index\tstart from given index. (begin from 0)" << endl;
     cout << "\tOPTIONAL ARGS:" << endl;
-    cout << "\t\t--lowInlierRatio\ttest on LoInlierRatio dataset." << endl;
-    cout << "\t\t--add_overlap\tadd overlap score input." << endl;
     cout << "\t\t--no_logs\tforbid generation of log files." << endl;
 };
 
@@ -223,8 +208,6 @@ int main(int argc, char** argv) {
             {"dataset_name", required_argument, NULL, 'n'},
             {"descriptor", required_argument, NULL, 'd'},
             {"start_index", required_argument, NULL, 's'},
-            {"lowInlierRatio", optional_argument, NULL, 'l'},
-            {"add_overlap", optional_argument, NULL, 'a'},
             {"no_logs", optional_argument, NULL, 'g'},
             {"help", optional_argument, NULL, 'h'},
             {"demo", optional_argument, NULL, 'm'},
@@ -247,12 +230,6 @@ int main(int argc, char** argv) {
                 break;
             case 'd':
                 descriptor = optarg;
-                break;
-            case 'l':
-                low_inlieratio = true;
-                break;
-            case 'a':
-                add_overlap = true;
                 break;
             case 'g':
                 no_logs = true;
@@ -281,8 +258,6 @@ int main(int argc, char** argv) {
     cout << "\tdataset_name: " << datasetName << endl;
     cout << "\tdescriptor: " << descriptor << endl;
     cout << "\tstart_index: " << id << endl;
-    cout << "\tLoInlierRatio: " << low_inlieratio << endl;
-    cout << "\tadd_overlap: " << add_overlap << endl;
     cout << "\tno_logs: " << no_logs << endl;
 
     sleep(5);
@@ -303,70 +278,6 @@ int main(int argc, char** argv) {
 		}
 	}
 
-	if (low_inlieratio ) {
-        if(datasetName == "3dmatch" || datasetName == "3dlomatch"){
-            ;
-        }
-        else{
-            cout << "Wrong dataset name!" << endl;
-            exit(-1);
-        }
-		vector<string>pairs;
-		string loader = datasetPath + "/dataload.txt";
-		ifstream f1(loader);
-		string line;
-		while (getline(f1, line)) {
-			pairs.push_back(line);
-		}
-		f1.close();
-		string analyse_csv = resultPath + "/" + datasetName + "_" + descriptor + ".csv";
-		ofstream outFile;
-		outFile.open(analyse_csv.c_str(), ios::out);
-		outFile.setf(ios::fixed, ios::floatfield);
-		outFile << "pair_name" << ',' << "corrected_or_no" << ',' << "inlier_num" << ',' << "total_num" << ',' << "inlier_ratio" << ',' << "RE" << ',' << "TE" << endl;
-		vector<string>fail_pair;
-		vector<double>time;
-		for (int i = id; i < pairs.size(); i++)
-		{
-			time.clear();
-			cout << "Pair " << i + 1 << "，total" << pairs.size()/*name_list.size()*/ << "，fail " << fail_pair.size() << endl;
-			string filename = pairs[i];
-			string corr_path = datasetPath + "/" + filename + "/corr_data.txt";
-			string gt_mat_path = datasetPath + "/" + filename + "/GTmat.txt";
-			string gt_label_path = datasetPath + "/" + filename + "/label.txt";
-			string src_cloud = datasetPath + "/" + filename + "/src_kpts.pcd";
-			string des_cloud = datasetPath + "/" + filename + "/tgt_kpts.pcd";
-			//string ov_label = "NULL";
-            string ov_label = datasetPath + "/" + filename + "/predator_ov.txt";
-			string folderPath = resultPath + "/" + filename;
-			double re, te;
-			double inlier_num, total_num;
-			double inlier_ratio, success_estimate, total_estimate;
-			int corrected = registration(datasetName, src_cloud, des_cloud, corr_path, gt_label_path, ov_label, gt_mat_path, folderPath, re, te, inlier_num, total_num, inlier_ratio, success_estimate, total_estimate, descriptor, time);
-			if (corrected)
-			{
-				cout << filename << " Success." << endl;
-				RE += re;
-				TE += te;
-			}
-			else
-			{
-				fail_pair.push_back(filename);
-				cout << filename << " Fail." << endl;
-			}
-			outFile << filename << ',' << corrected << ',' << inlier_num << ',' << total_num << ',';
-			outFile << setprecision(4) << inlier_ratio << ',' << re << ',' << te << ',' << time[0] << ',' << time[1] << ',' << time[2] << ',' << time[3] << endl;
-			cout << endl;
-		}
-		outFile.close();
-		double success_num = pairs.size() - fail_pair.size();
-		cout << "total:" << endl;
-		cout << "\tRR:" << pairs.size() - fail_pair.size() << "/" << pairs.size() << " " << success_num / (pairs.size() / 1.0) << endl;
-		cout << "\tRE:" << RE / (success_num / 1.0) << endl;
-		cout << "\tTE:" << TE / (success_num / 1.0) << endl;
-		//cout << "fail pairs:" << endl;
-		exit(0);
-	}
 	if (descriptor == "predator" && (datasetName == "3dmatch" || datasetName == "3dlomatch")) {
 		vector<string>pairs;
 		string loader = datasetPath + "/dataload.txt";
@@ -395,9 +306,6 @@ int main(int argc, char** argv) {
 			string gt_mat_path = datasetPath + "/" + filename + "@GTmat.txt";
 			string gt_label_path = datasetPath + "/" + filename + "@label.txt";
             string ov_label = "NULL";
-            if(add_overlap){
-                ov_label = datasetPath + "/" + filename + "@predator_ov.txt";
-            }
 			string folderPath = resultPath + "/" + filename;
 			double re, te;
 			double inlier_num, total_num;
@@ -634,7 +542,7 @@ int main(int argc, char** argv) {
 			string corr_path = txt_path + "/" + filename + '/' + descriptor + "@corr.txt";
 			string gt_mat_path = txt_path + "/" + filename + '/' + descriptor + "@gtmat.txt";
 			string gt_label_path = txt_path + "/" + filename + '/' + descriptor + "@gtlabel.txt";
-            string ov_label = txt_path + "/" + filename + '/' + descriptor + "@gt_ov.txt";
+            string ov_label = "NULL";
 			string folderPath = resultPath + "/" + filename;
 			double re, te;
 			double inlier_num, total_num;
@@ -821,9 +729,6 @@ int main(int argc, char** argv) {
 			double inlier_num, total_num;
 			double inlier_ratio, success_estimate, total_estimate;
 			string ov_label = "NULL";
-            if(add_overlap){
-                ov_label = folderPath + "/ov.txt";
-            }
 			int corrected = registration("U3M", src_pointcloud, des_pointcloud, corr_path, gt_label_path, ov_label, gt_mat_path, folderPath, re, te, inlier_num, total_num, inlier_ratio, success_estimate, total_estimate, descriptor, time);
 			cout << filename;
 			for (int i = 0; i < 10; i++)
