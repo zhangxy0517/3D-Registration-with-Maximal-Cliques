@@ -19,76 +19,76 @@
 #include<pcl/keypoints/iss_3d.h>
 #include "Eva.h"
 /*******************************************************************************Descriptor********************************************************/
-void SHOT_compute(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, vector<int> indices, float sup_radius, vector<vector<float>>&features, vector<LRF>&LRFs)
-{
-	int i, j;
-	pcl::PointIndicesPtr Idx = boost::shared_ptr<pcl::PointIndices>();
-	for (j = 0; j<indices.size(); j++)
-		Idx->indices.push_back(indices[j]);
+// void SHOT_compute(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, vector<int> indices, float sup_radius, vector<vector<float>>&features, vector<LRF>&LRFs)
+// {
+// 	int i, j;
+// 	pcl::PointIndicesPtr Idx = boost::shared_ptr<pcl::PointIndices>();
+// 	for (j = 0; j<indices.size(); j++)
+// 		Idx->indices.push_back(indices[j]);
 	
-	pcl::NormalEstimationOMP<pcl::PointXYZ, pcl::Normal> n;
-	pcl::PointCloud<pcl::Normal>::Ptr normals(new pcl::PointCloud<pcl::Normal>);
-	pcl::search::KdTree<pcl::PointXYZ>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZ>);
-	tree->setInputCloud(cloud);
-	n.setInputCloud(cloud);
-	n.setSearchMethod(tree);
-	n.setKSearch(20);
-	n.compute(*normals);
+// 	pcl::NormalEstimationOMP<pcl::PointXYZ, pcl::Normal> n;
+// 	pcl::PointCloud<pcl::Normal>::Ptr normals(new pcl::PointCloud<pcl::Normal>);
+// 	pcl::search::KdTree<pcl::PointXYZ>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZ>);
+// 	tree->setInputCloud(cloud);
+// 	n.setInputCloud(cloud);
+// 	n.setSearchMethod(tree);
+// 	n.setKSearch(20);
+// 	n.compute(*normals);
 	
-	//SHOT_LRF
-	pcl::PointCloud<pcl::ReferenceFrame>::Ptr pcl_LRF(new pcl::PointCloud<pcl::ReferenceFrame>);
-	pcl::SHOTLocalReferenceFrameEstimation<pcl::PointXYZ, pcl::ReferenceFrame> LRF_est;
-	LRF_est.setInputCloud(cloud);
-	LRF_est.setIndices(Idx);
-	LRF_est.setRadiusSearch(sup_radius);
-	LRF_est.compute(*pcl_LRF);
+// 	//SHOT_LRF
+// 	pcl::PointCloud<pcl::ReferenceFrame>::Ptr pcl_LRF(new pcl::PointCloud<pcl::ReferenceFrame>);
+// 	pcl::SHOTLocalReferenceFrameEstimation<pcl::PointXYZ, pcl::ReferenceFrame> LRF_est;
+// 	LRF_est.setInputCloud(cloud);
+// 	LRF_est.setIndices(Idx);
+// 	LRF_est.setRadiusSearch(sup_radius);
+// 	LRF_est.compute(*pcl_LRF);
 
-	//SHOT
-	pcl::SHOTEstimation<pcl::PointXYZ, pcl::Normal, pcl::SHOT352> shot_est;
-	shot_est.setInputCloud(cloud);
-	shot_est.setInputNormals(normals);
-	pcl::PointCloud<pcl::SHOT352>::Ptr shots(new pcl::PointCloud<pcl::SHOT352>());
-	pcl::search::KdTree<pcl::PointXYZ>::Ptr treeI(new pcl::search::KdTree<pcl::PointXYZ>);
-	treeI->setInputCloud(cloud);
-	shot_est.setSearchMethod(tree);
-	shot_est.setIndices(Idx);
-	shot_est.setRadiusSearch(sup_radius);
-	shot_est.compute(*shots);
-	//
-	float NORMAL = 1;
-	for (i = 0; i<Idx->indices.size(); i++)
-	{
-		if (abs(pcl_LRF->points[i].x_axis[0]) <= NORMAL)
-		{
-			LRF temp;
-			temp.pointID = Idx->indices[i];
-			temp.x_axis.x = pcl_LRF->points[i].x_axis[0];
-			temp.x_axis.y = pcl_LRF->points[i].x_axis[1];
-			temp.x_axis.z = pcl_LRF->points[i].x_axis[2];
-			temp.y_axis.x = pcl_LRF->points[i].y_axis[0];
-			temp.y_axis.y = pcl_LRF->points[i].y_axis[1];
-			temp.y_axis.z = pcl_LRF->points[i].y_axis[2];
-			temp.z_axis.x = pcl_LRF->points[i].z_axis[0];
-			temp.z_axis.y = pcl_LRF->points[i].z_axis[1];
-			temp.z_axis.z = pcl_LRF->points[i].z_axis[2];
-			LRFs.push_back(temp);
-		}
-		else
-		{
-			LRF temp = { NULL_POINTID,{ 1.0f,0.0f,0.0f },{ 0.0f,1.0f,0.0f },{ 0.0f,0.0f,1.0f } };
-			LRFs.push_back(temp);
-		}
-	}
-	features.resize(shots->points.size());
-	for (i = 0; i<features.size(); i++)
-	{
-		features[i].resize(352);
-		for (j = 0; j<352; j++)
-		{
-			features[i][j] = shots->points[i].descriptor[j];
-		}
-	}
-}
+// 	//SHOT
+// 	pcl::SHOTEstimation<pcl::PointXYZ, pcl::Normal, pcl::SHOT352> shot_est;
+// 	shot_est.setInputCloud(cloud);
+// 	shot_est.setInputNormals(normals);
+// 	pcl::PointCloud<pcl::SHOT352>::Ptr shots(new pcl::PointCloud<pcl::SHOT352>());
+// 	pcl::search::KdTree<pcl::PointXYZ>::Ptr treeI(new pcl::search::KdTree<pcl::PointXYZ>);
+// 	treeI->setInputCloud(cloud);
+// 	shot_est.setSearchMethod(tree);
+// 	shot_est.setIndices(Idx);
+// 	shot_est.setRadiusSearch(sup_radius);
+// 	shot_est.compute(*shots);
+// 	//
+// 	float NORMAL = 1;
+// 	for (i = 0; i<Idx->indices.size(); i++)
+// 	{
+// 		if (abs(pcl_LRF->points[i].x_axis[0]) <= NORMAL)
+// 		{
+// 			LRF temp;
+// 			temp.pointID = Idx->indices[i];
+// 			temp.x_axis.x = pcl_LRF->points[i].x_axis[0];
+// 			temp.x_axis.y = pcl_LRF->points[i].x_axis[1];
+// 			temp.x_axis.z = pcl_LRF->points[i].x_axis[2];
+// 			temp.y_axis.x = pcl_LRF->points[i].y_axis[0];
+// 			temp.y_axis.y = pcl_LRF->points[i].y_axis[1];
+// 			temp.y_axis.z = pcl_LRF->points[i].y_axis[2];
+// 			temp.z_axis.x = pcl_LRF->points[i].z_axis[0];
+// 			temp.z_axis.y = pcl_LRF->points[i].z_axis[1];
+// 			temp.z_axis.z = pcl_LRF->points[i].z_axis[2];
+// 			LRFs.push_back(temp);
+// 		}
+// 		else
+// 		{
+// 			LRF temp = { NULL_POINTID,{ 1.0f,0.0f,0.0f },{ 0.0f,1.0f,0.0f },{ 0.0f,0.0f,1.0f } };
+// 			LRFs.push_back(temp);
+// 		}
+// 	}
+// 	features.resize(shots->points.size());
+// 	for (i = 0; i<features.size(); i++)
+// 	{
+// 		features[i].resize(352);
+// 		for (j = 0; j<352; j++)
+// 		{
+// 			features[i][j] = shots->points[i].descriptor[j];
+// 		}
+// 	}
+// }
 
 void transformCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, LRF pointLRF, pcl::PointCloud<pcl::PointXYZ>::Ptr &transformed_cloud)
 {
@@ -697,49 +697,49 @@ void Harris3D_detector(PointCloudPtr cloud, float NMS_radius, vector<int>&key_in
 		key_indices.push_back(Idx[0]);
 	}
 }
-void FPFH_descriptor(pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud, std::vector<int>& indices,
-                     float sup_radius, std::vector<std::vector<float>>& features){
-    int i, j;
-    //pcl::PointIndicesPtr Idx = std::make_shared<pcl::PointIndices>();
-    pcl::PointIndicesPtr Idx = boost::shared_ptr<pcl::PointIndices>();
-    for (j = 0; j < indices.size(); j++)
-        Idx->indices.push_back(indices[j]);
-    pcl::NormalEstimationOMP<pcl::PointXYZ, pcl::Normal> n;
-    pcl::PointCloud<pcl::Normal>::Ptr normals(new pcl::PointCloud<pcl::Normal>);
-    pcl::search::KdTree<pcl::PointXYZ>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZ>);
-    tree->setInputCloud(cloud);
-    n.setInputCloud(cloud);
-    n.setSearchMethod(tree);
-    n.setRadiusSearch(sup_radius / 4);
-    n.compute(*normals);
-    // Create the FPFH estimation class, and pass the input dataset+normals to it
-    pcl::FPFHEstimationOMP<pcl::PointXYZ, pcl::Normal, pcl::FPFHSignature33> fpfh;
-    fpfh.setInputCloud (cloud);
-    fpfh.setInputNormals (normals);
-    // alternatively, if cloud is of tpe PointNormal, do fpfh.setInputNormals (cloud);
+// void FPFH_descriptor(pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud, std::vector<int>& indices,
+//                      float sup_radius, std::vector<std::vector<float>>& features){
+//     int i, j;
+//     //pcl::PointIndicesPtr Idx = std::make_shared<pcl::PointIndices>();
+//     pcl::PointIndicesPtr Idx = boost::shared_ptr<pcl::PointIndices>();
+//     for (j = 0; j < indices.size(); j++)
+//         Idx->indices.push_back(indices[j]);
+//     pcl::NormalEstimationOMP<pcl::PointXYZ, pcl::Normal> n;
+//     pcl::PointCloud<pcl::Normal>::Ptr normals(new pcl::PointCloud<pcl::Normal>);
+//     pcl::search::KdTree<pcl::PointXYZ>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZ>);
+//     tree->setInputCloud(cloud);
+//     n.setInputCloud(cloud);
+//     n.setSearchMethod(tree);
+//     n.setRadiusSearch(sup_radius / 4);
+//     n.compute(*normals);
+//     // Create the FPFH estimation class, and pass the input dataset+normals to it
+//     pcl::FPFHEstimationOMP<pcl::PointXYZ, pcl::Normal, pcl::FPFHSignature33> fpfh;
+//     fpfh.setInputCloud (cloud);
+//     fpfh.setInputNormals (normals);
+//     // alternatively, if cloud is of tpe PointNormal, do fpfh.setInputNormals (cloud);
 
-    // Create an empty kdtree representation, and pass it to the FPFH estimation object.
-    // Its content will be filled inside the object, based on the given input dataset (as no other search surface is given).
+//     // Create an empty kdtree representation, and pass it to the FPFH estimation object.
+//     // Its content will be filled inside the object, based on the given input dataset (as no other search surface is given).
 
-    fpfh.setSearchMethod (tree);
-    fpfh.setIndices(Idx);
-    // Output datasets
-    pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfhs (new pcl::PointCloud<pcl::FPFHSignature33> ());
+//     fpfh.setSearchMethod (tree);
+//     fpfh.setIndices(Idx);
+//     // Output datasets
+//     pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfhs (new pcl::PointCloud<pcl::FPFHSignature33> ());
 
-    // Use all neighbors in a sphere of radius 5cm
-    // IMPORTANT: the radius used here has to be larger than the radius used to estimate the surface normals!!!
-    fpfh.setRadiusSearch (sup_radius);
+//     // Use all neighbors in a sphere of radius 5cm
+//     // IMPORTANT: the radius used here has to be larger than the radius used to estimate the surface normals!!!
+//     fpfh.setRadiusSearch (sup_radius);
 
-    // Compute the features
-    fpfh.compute (*fpfhs);
-    features.resize(fpfhs->points.size());
-    for(i = 0; i < features.size(); i++){
-        features[i].resize(33);
-        for(j = 0; j < 33; j++){
-            features[i][j] = fpfhs->points[i].histogram[j];
-        }
-    }
-}
+//     // Compute the features
+//     fpfh.compute (*fpfhs);
+//     features.resize(fpfhs->points.size());
+//     for(i = 0; i < features.size(); i++){
+//         features[i].resize(33);
+//         for(j = 0; j < 33; j++){
+//             features[i][j] = fpfhs->points[i].histogram[j];
+//         }
+//     }
+// }
 void FPFH_descriptor(pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud, float sup_radius, std::vector<std::vector<float>>& features){
     int i, j;
     pcl::NormalEstimationOMP<pcl::PointXYZ, pcl::Normal> n;
