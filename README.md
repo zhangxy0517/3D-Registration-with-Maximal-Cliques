@@ -1,5 +1,5 @@
 # 3D Registration with Maximal Cliques (CVPR23 best paper candidate)
-Source code of [3D Registration with Maximal Cliques](https://arxiv.org/abs/2305.10854).  
+Source code of [3D Registration with Maximal Cliques](https://openaccess.thecvf.com/content/CVPR2023/html/Zhang_3D_Registration_With_Maximal_Cliques_CVPR_2023_paper.html).  
 
 ## Introduction  
 In this paper, we present a 3D registration method with maximal cliques (MAC). The key insight is to loosen the previous maximum clique constraint,
