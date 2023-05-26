@@ -74,12 +74,11 @@ All tested datasets can be found at this [link](https://zxy517-my.sharepoint.com
 If you find this code useful for your work or use it in your project, please consider citing:
 
 ```shell
-@InProceedings{zhang2023mac,
-    author    = {Xiyu Zhang, Jiaqi Yang, Shikun Zhang and Yanning Zhang},
-    title     = {3D Registration with Maximal Cliques},
-    booktitle = {Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)},
-    month     = {June},
-    year      = {2023},
-    pages     = {}
+@inproceedings{zhang20233d,
+  title={3D Registration with Maximal Cliques},
+  author={Zhang, Xiyu and Yang, Jiaqi and Zhang, Shikun and Zhang, Yanning},
+  booktitle={Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition},
+  pages={17745--17754},
+  year={2023}
 }
 ```
