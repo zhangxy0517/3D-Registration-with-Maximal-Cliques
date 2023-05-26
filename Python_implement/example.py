@@ -140,12 +140,12 @@ def test(folder):
     GTmat_path = folder + '/GTmat.txt'
     src_pcd_path = folder + '/source.ply'
     tgt_pcd_path = folder + '/target.ply'
-    # label_path = folder + '/label.txt'
+    
     corr_data = np.loadtxt(corr_path, dtype=np.float32)
     GTmat = np.loadtxt(GTmat_path, dtype=np.float32)
     src_pcd = o3d.io.read_point_cloud(src_pcd_path)
     tgt_pcd = o3d.io.read_point_cloud(tgt_pcd_path)
-    # label = np.loadtxt(label_path, dtype=int)
+    
     src_pts = torch.from_numpy(corr_data[:, 0:3]).cuda()
     tgt_pts = torch.from_numpy(corr_data[:, 3:6]).cuda()
     GTmat = torch.from_numpy(GTmat).cuda()
@@ -194,7 +194,7 @@ def test(folder):
     filtered_clique_ind = list(set(clique_ind_of_node))
     filtered_clique_ind.remove(-1)
     print(f'After filtered: %d' % len(filtered_clique_ind))
-    # 按照节点数分类组成batch
+    
     group = []
     for s in range(3, max_size + 1):
         group.append([])
