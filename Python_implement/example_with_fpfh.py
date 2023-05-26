@@ -148,13 +148,13 @@ def extract_fpfh_features(keypts, downsample):
     return features
 
 def test(folder):
-    GTmat_path = folder + '/GTmat.txt'
+    GTmat_path = folder + '/GTmat.txt' # ground truth transformation for calculate RE TE
     src_pcd_path = folder + '/source.ply'
     tgt_pcd_path = folder + '/target.ply'
     GTmat = np.loadtxt(GTmat_path, dtype=np.float32)
     src_pcd = o3d.io.read_point_cloud(src_pcd_path)
     tgt_pcd = o3d.io.read_point_cloud(tgt_pcd_path)
-    # extract FPFH feature
+    # extract features (FPFH for example)
     src_kpts = src_pcd.voxel_down_sample(0.05)
     tgt_kpts = tgt_pcd.voxel_down_sample(0.05)
     src_desc = extract_fpfh_features(src_kpts, 0.05)
@@ -171,6 +171,7 @@ def test(folder):
     tgt_pts = torch.from_numpy(tgt_pts).cuda()
     GTmat = torch.from_numpy(GTmat).cuda()
     t1 = time.perf_counter()
+    # graph construction
     src_dist = ((src_pts[:, None, :] - src_pts[None, :, :]) ** 2).sum(-1) ** 0.5
     tgt_dist = ((tgt_pts[:, None, :] - tgt_pts[None, :, :]) ** 2).sum(-1) ** 0.5
     cross_dis = torch.abs(src_dist - tgt_dist)
@@ -180,7 +181,7 @@ def test(folder):
     SCG = torch.matmul(FCG, FCG) * FCG
     t2 = time.perf_counter()
     print(f'Graph construction: %.2fms' % ((t2 - t1) * 1000))
-
+    # search cliques
     SCG = SCG.cpu().numpy()
     t1 = time.perf_counter()
     graph = igraph.Graph.Adjacency((SCG > 0).tolist())
