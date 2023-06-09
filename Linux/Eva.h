@@ -128,31 +128,20 @@ void feature_matching(PointCloudPtr& cloud_source, PointCloudPtr& cloud_target,
                       vector<vector<float>>& feature_source, vector<vector<float>>& feature_target, vector<Corre_3DMatch>& Corres);
 void feature_matching(PointCloudPtr& cloud_source, PointCloudPtr& cloud_target, vector<LRF>LRFs_source, vector<LRF>LRFs_target,
 	vector<int>& Idx_source, vector<int>& Idx_target, vector<vector<float>>& feature_source, vector<vector<float>>& feature_target, vector<Corre>& Corres);
-void feature_matching_ratio(PointCloudPtr& cloud_source, PointCloudPtr& cloud_target, vector<LRF>LRFs_source, vector<LRF>LRFs_target,
-	vector<int>& Idx_source, vector<int>& Idx_target, vector<vector<float>>& feature_source, vector<vector<float>>& feature_target, vector<Corre>& Corres);
-void MyType2Eigen(TransMat& M, Eigen::Matrix4f& EigenM);
 void Add_Gaussian_noise(float dev, pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud, pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud_noise);
-void cloud_simp(float size, pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud, pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud_filtered);
 int Correct_corre_compute(PointCloudPtr cloud_s, PointCloudPtr cloud_t, vector<Corre> Corres, float correct_thresh, Eigen::Matrix4d& GT_mat, string path);
 void Correct_corre_select(PointCloudPtr cloud_s, PointCloudPtr cloud_t, vector<Corre> Corres, float correct_thresh,
 	Eigen::Matrix4f& GT_mat, vector<Corre>& Corres_selected);
 double OTSU_thresh(/*vector<Vote> Vote_score*/Eigen::VectorXd values);
 double Distance(pcl::PointXYZ& A, pcl::PointXYZ& B);
-double Distance_3DMatch(Vertex A, Vertex B);
 Eigen::MatrixXf Graph_construction(vector<Corre_3DMatch>& correspondence, float resolution, bool sc2, const string &name,const string &descriptor);
 Eigen::MatrixXf Graph_construction(vector<Corre_3DMatch>& correspondence, float resolution, bool sc2, float cmp_thresh);
 /**********************************************3DCorres_methods***************************************/
 //descriptor
 void SHOT_compute(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, vector<int> indices, float sup_radius, vector<vector<float>>& features, vector<LRF>& LRFs);
 pcl::PointCloud<pcl::PointXYZ>::Ptr getISS3dKeypoint(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_in, float resolution, vector<int>& key_indices);
-void LFSH_compute(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, vector<int> indices, float sup_radius, int bin_num, vector<vector<float>>& Histograms);
-void RCS_compute(pcl::PointCloud<pcl::PointXYZ>::Ptr  cloud, vector<int> indices, float sup_radius, float rotate_angle, int num_of_rotations,
-	int num_of_contour_points, vector<vector<float>>& Histograms);
-void ISS_detector(PointCloudPtr cloud, float mr, float support_radius, vector<int>& key_indices);
 void Harris3D_detector(PointCloudPtr cloud, float NMS_radius, vector<int>& key_indices);
 void FPFH_descriptor(pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud, float sup_radius, std::vector<std::vector<float>>& features);
-void FPFH_descriptor(pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud, std::vector<int>& indices,
-                     float sup_radius, std::vector<std::vector<float>>& features);
 int Voxel_grid_downsample(pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud, pcl::PointCloud<pcl::PointXYZ>::Ptr& new_cloud,
                       float leaf_size);
 vector<int> removeInvalidPoint(PointCloudPtr cloud_in, vector<int>& keyPointIdx, float resolution);
