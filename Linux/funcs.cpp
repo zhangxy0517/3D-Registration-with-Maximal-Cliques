@@ -132,65 +132,6 @@ int XYZorPly_Read(string Filename, PointCloudPtr& cloud)
 	return 0;
 }
 
-void write_cloud(PointCloudPtr cloud, string file_name)
-{
-	FILE* fpo = fopen(file_name.c_str(), "w");
-	fprintf(fpo, "%d\n", cloud->points.size());
-	for (int i = 0; i < cloud->points.size(); i++)
-	{
-		fprintf(fpo, "%f %f %f\n", cloud->points[i].x, cloud->points[i].y, cloud->points[i].z);
-	}
-	fclose(fpo);
-}
-void Cloud2Meshlab_showfile(string file_open, string file_save)
-{
-	pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>);
-	XYZorMeshlabPly_Read(file_open, cloud);
-	float Triangle_radius = 10 * MeshResolution_mr_compute(cloud);
-	//
-	pcl::NormalEstimation<pcl::PointXYZ, pcl::Normal> n;
-	pcl::PointCloud<pcl::Normal>::Ptr normals(new pcl::PointCloud<pcl::Normal>);
-	pcl::search::KdTree<pcl::PointXYZ>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZ>);
-	tree->setInputCloud(cloud);
-	n.setInputCloud(cloud);
-	n.setSearchMethod(tree);
-	n.setKSearch(20);
-	n.compute(*normals);
-	//
-	pcl::PointCloud<pcl::PointNormal>::Ptr cloud_with_normals(new pcl::PointCloud<pcl::PointNormal>);
-	pcl::concatenateFields(*cloud, *normals, *cloud_with_normals);
-	pcl::search::KdTree<pcl::PointNormal>::Ptr tree2(new pcl::search::KdTree<pcl::PointNormal>);
-	tree2->setInputCloud(cloud_with_normals);
-	// Initialize objects2014/1/22 15:32:35
-	pcl::PolygonMesh triangles;
-	pcl::GreedyProjectionTriangulation<pcl::PointNormal> gp3;
-	gp3.setSearchRadius(Triangle_radius);
-	gp3.setMu(2.5);
-	gp3.setMaximumNearestNeighbors(100);
-	gp3.setMaximumSurfaceAngle(M_PI / 4); // 45 degrees
-	gp3.setMinimumAngle(M_PI / 6); // 30 degrees
-	gp3.setMaximumAngle(2 * M_PI / 3); // 120 degrees
-	gp3.setNormalConsistency(false);
-	// Get result
-	gp3.setInputCloud(cloud_with_normals);
-	gp3.setSearchMethod(tree2);
-	gp3.reconstruct(triangles);
-	FILE* fp = fopen(file_save.c_str(), "w");
-	fprintf(fp, "ply\n");
-	fprintf(fp, "format ascii 1.0\n");
-	fprintf(fp, "%s %s %d\n", "element", "vertex", cloud->points.size());
-	fprintf(fp, "property float x\n");
-	fprintf(fp, "property float y\n");
-	fprintf(fp, "property float z\n");
-	fprintf(fp, "%s %s %d\n", "element", "face", triangles.polygons.size());
-	fprintf(fp, "property list uchar int vertex_index\n");
-	fprintf(fp, "end_header\n");
-	for (int i = 0; i < cloud->points.size(); i++)
-		fprintf(fp, "%f %f %f\n", cloud->points[i].x, cloud->points[i].y, cloud->points[i].z);
-	for (int i = 0; i < triangles.polygons.size(); i++)
-		fprintf(fp, "%d %d %d %d\n", 3, triangles.polygons[i].vertices[0], triangles.polygons[i].vertices[1], triangles.polygons[i].vertices[2]);
-	fclose(fp);
-}
 float MeshResolution_mr_compute(PointCloudPtr& cloud)
 {
 	int i;
@@ -320,60 +261,7 @@ void feature_matching(PointCloudPtr& cloud_source, PointCloudPtr& cloud_target, 
 		Corres.push_back(temp);
 	}
 }
-void feature_matching_ratio(PointCloudPtr& cloud_source, PointCloudPtr& cloud_target, vector<LRF>LRFs_source, vector<LRF>LRFs_target,
-	vector<int>& Idx_source, vector<int>& Idx_target, vector<vector<float>>& feature_source, vector<vector<float>>& feature_target, vector<Corre>& Corres)
-{
-	int i, j;
-	pcl::PointCloud<pcl::SHOT352>::Ptr Feature_source(new pcl::PointCloud<pcl::SHOT352>);
-	pcl::PointCloud<pcl::SHOT352>::Ptr Feature_target(new pcl::PointCloud<pcl::SHOT352>);
-	Feature_source->points.resize(feature_source.size());
-	Feature_target->points.resize(feature_target.size());
-	for (i = 0; i < feature_source.size(); i++)
-	{
-		for (j = 0; j < 352; j++)
-		{
-			if (j < feature_source[i].size()) Feature_source->points[i].descriptor[j] = feature_source[i][j];
-			else Feature_source->points[i].descriptor[j] = 0;
-		}
-	}
-	for (i = 0; i < feature_target.size(); i++)
-	{
-		for (j = 0; j < 352; j++)
-		{
-			if (j < feature_target[i].size()) Feature_target->points[i].descriptor[j] = feature_target[i][j];
-			else Feature_target->points[i].descriptor[j] = 0;
-		}
-	}
-	//
-	pcl::KdTreeFLANN<pcl::SHOT352> kdtree;
-	vector<int>Idx;
-	vector<float>Dist;
-	kdtree.setInputCloud(Feature_target);
-	for (i = 0; i < Feature_source->points.size(); i++)
-	{
-		kdtree.nearestKSearch(Feature_source->points[i], 2, Idx, Dist);
-		Corre temp;
-		temp.source_idx = Idx_source[i];
-		temp.target_idx = Idx_target[Idx[0]];
-		temp.source_LRF = LRFs_source[i];
-		temp.target_LRF = LRFs_target[Idx[0]];
-		if (Dist[1] <= 0.0000001)
-			temp.score = 0;
-		else
-			temp.score = 1 - sqrt(Dist[0]) / sqrt(Dist[1]);
-		Corres.push_back(temp);
-	}
-}
 
-//
-void MyType2Eigen(TransMat& M, Eigen::Matrix4f& EigenM)
-{
-	for (int i = 0; i < 4; i++)
-	{
-		for (int j = 0; j < 4; j++)
-			EigenM(i, j) = M.M[i][j];
-	}
-}
 void Add_Gaussian_noise(float dev, pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud, pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud_noise)
 {
 	boost::mt19937 rng; rng.seed(static_cast<unsigned int> (time(0)));
@@ -391,13 +279,7 @@ void Add_Gaussian_noise(float dev, pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud, p
 		cloud_noise->points[point_i].z = cloud->points[point_i].z + static_cast<float> (var_nor());
 	}
 }
-void cloud_simp(float size, pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud, pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud_filtered)
-{
-	pcl::VoxelGrid<pcl::PointXYZ>sor;
-	sor.setInputCloud(cloud);
-	sor.setLeafSize(size, size, size);
-	sor.filter(*cloud_filtered);
-}
+
 int Correct_corre_compute(PointCloudPtr cloud_s, PointCloudPtr cloud_t, vector<Corre> Corres, float correct_thresh, Eigen::Matrix4d& GT_mat, string path)
 {
 	if (Corres.size() == 0) return 0;
@@ -560,15 +442,6 @@ double OTSU_thresh(/*vector<Vote> Vote_score*/Eigen::VectorXd values)
 
 //
 double Distance(pcl::PointXYZ& A, pcl::PointXYZ& B) {
-	double distance = 0;
-	double d_x = (double)A.x - (double)B.x;
-	double d_y = (double)A.y - (double)B.y;
-	double d_z = (double)A.z - (double)B.z;
-	distance = sqrt(d_x * d_x + d_y * d_y + d_z * d_z);
-	return distance;
-}
-
-double Distance_3DMatch(Vertex A, Vertex B) {
 	double distance = 0;
 	double d_x = (double)A.x - (double)B.x;
 	double d_y = (double)A.y - (double)B.y;
@@ -823,45 +696,4 @@ int RANSAC(vector<Corre_3DMatch> Match, float resolution, int  _Iterations, Eige
 		Iterations--;
 	}
 	return 1;
-}
-
-double trMatrix(double matrix[][3]) {
-	double tr = 0;
-	for (int i = 0; i < 3; i++)
-	{
-		tr += matrix[i][i];
-	}
-	return tr;
-}
-
-double Rotation_error(double gt_R[][4], double est_R[][4])
-{
-	double res = 0;
-	double R[3][3];
-	for (int i = 0; i < 3; i++)
-	{
-		for (int j = 0; j < 3; j++)
-		{
-			R[i][j] = (gt_R[i][0] * est_R[0][j] + gt_R[i][1] * est_R[1][j] + gt_R[i][2] * est_R[2][j]);
-		}
-	}
-	//cout << trMatrix(R)<<endl;
-	double tr = trMatrix(R);
-	if (tr > 3)tr = 3;
-	if (tr < -1)tr = -1;
-	//return trMatrix(R);
-	//return (trMatrix(R) - 1) / 2;
-	//return 180/M_PI*acos((trMatrix(R)-1)/2);
-	return 180 / M_PI * acos((tr - 1) / 2);
-
-}
-
-double Translation_error(double gt_T[][4], double est_T[][4])
-{
-	double res = 0;
-	for (int i = 0; i < 3; i++)
-	{
-		res += pow(gt_T[i][3] - est_T[i][3], 2);
-	}
-	return sqrt(res) * 100;
 }
