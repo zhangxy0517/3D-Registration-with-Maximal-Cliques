@@ -1,4 +1,4 @@
-# 3D Registration with Maximal Cliques (CVPR23 best paper candidate)
+# 3D Registration with Maximal Cliques (CVPR23 best student paper award)
 Source code of [3D Registration with Maximal Cliques](https://openaccess.thecvf.com/content/CVPR2023/html/Zhang_3D_Registration_With_Maximal_Cliques_CVPR_2023_paper.html).  
 
 ## Introduction  
