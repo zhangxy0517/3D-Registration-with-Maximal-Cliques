@@ -697,3 +697,40 @@ int RANSAC(vector<Corre_3DMatch> Match, float resolution, int  _Iterations, Eige
 	}
 	return 1;
 }
+float RMSE_compute_scene(PointCloudPtr &cloud_source, PointCloudPtr &cloud_target, Eigen::Matrix4d& Mat_est, Eigen::Matrix4d& Mat_GT, float overlap_thresh)
+{
+    float RMSE_temp = 0.0f;
+    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_source_trans_GT(new pcl::PointCloud<pcl::PointXYZ>);
+    pcl::transformPointCloud(*cloud_source, *cloud_source_trans_GT, Mat_GT);
+    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_source_trans_EST(new pcl::PointCloud<pcl::PointXYZ>);
+    pcl::transformPointCloud(*cloud_source, *cloud_source_trans_EST, Mat_est);
+    vector<int>overlap_idx;
+    overlap_thresh = 0.0375;
+    pcl::KdTreeFLANN<pcl::PointXYZ> kdtree1;
+    pcl::PointXYZ query_point;
+    vector<int>pointIdx;
+    vector<float>pointDst;
+    kdtree1.setInputCloud(cloud_target);
+    for (int i = 0; i < cloud_source_trans_GT->points.size(); i++)
+    {
+        query_point = cloud_source_trans_GT->points[i];
+        kdtree1.nearestKSearch(query_point, 1, pointIdx, pointDst);
+        if (sqrt(pointDst[0]) <= overlap_thresh)
+            overlap_idx.push_back(i);
+    }
+    //
+    pcl::KdTreeFLANN<pcl::PointXYZ> kdtree2;
+    kdtree2.setInputCloud(cloud_source_trans_GT);
+    for (int i = 0; i < overlap_idx.size(); i++)
+    {
+        //query_point = cloud_source_trans_EST->points[overlap_idx[i]];
+        //kdtree2.nearestKSearch(query_point,1,pointIdx,pointDst); RMSE_temp+=sqrt(pointDst[0]);
+        float dist_x = pow(cloud_source_trans_EST->points[overlap_idx[i]].x - cloud_source_trans_GT->points[overlap_idx[i]].x, 2);
+        float dist_y = pow(cloud_source_trans_EST->points[overlap_idx[i]].y - cloud_source_trans_GT->points[overlap_idx[i]].y, 2);
+        float dist_z = pow(cloud_source_trans_EST->points[overlap_idx[i]].z - cloud_source_trans_GT->points[overlap_idx[i]].z, 2);
+        float dist = dist_x + dist_y + dist_z;
+        RMSE_temp += dist;
+    }
+    RMSE_temp /= overlap_idx.size();
+    return sqrt(RMSE_temp);
+}
