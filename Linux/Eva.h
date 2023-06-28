@@ -193,4 +193,5 @@ int Geometric_consistency(vector<Vote_exp>pts_degree, vector<int>& Match_inlier)
 Eigen::VectorXf power_iteration(Eigen::MatrixXf& Graph, int iteration);
 void savetxt(vector<Corre_3DMatch>corr, const string& save_path);
 void computeCentroidAndCovariance(Corre_3DMatch& c, PointCloudPtr& src_knn, PointCloudPtr& des_knn);
+float RMSE_compute_scene(PointCloudPtr &cloud_source, PointCloudPtr &cloud_target, Eigen::Matrix4d& Mat_est, Eigen::Matrix4d& Mat_GT, float overlap_thresh);
 #endif
