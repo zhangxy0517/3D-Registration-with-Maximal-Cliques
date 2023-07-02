@@ -66,7 +66,7 @@ void calculate_gt_overlap(vector<Corre_3DMatch>&corre, PointCloudPtr &src, Point
     src_trans.reset(new pcl::PointCloud<pcl::PointXYZ>);
 }
 
-bool registration(const string &name,const string &src_pointcloud, const string &des_pointcloud,const string &corr_path, const string &label_path, const string &ov_label, const string &gt_mat, const string &folderPath, double& RE, double& TE, double& inlier_num, double& total_num, double& inlier_ratio, double& success_num, double& total_estimate, const string &descriptor, vector<double>& time_consumption) {
+bool registration(const string &name, string src_pointcloud, string des_pointcloud,const string &corr_path, const string &label_path, const string &ov_label, const string &gt_mat, const string &folderPath, double& RE, double& TE, double& inlier_num, double& total_num, double& inlier_ratio, double& success_num, double& total_estimate, const string &descriptor, vector<double>& time_consumption) {
 	bool sc2 = true;
 	bool Corr_select = false;
 	bool GT_cmp_mode = false;
