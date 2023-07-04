@@ -94,7 +94,7 @@ def post_refinement(initial_trans, src_kpts, tgt_kpts, iters, weights=None):
     pre_inlier_count = 0
     for i in range(iters):
         pred_tgt = transform(src_kpts, initial_trans)
-        L2_dis = torch.norm(pred_tgt - src_kpts, dim=-1)
+        L2_dis = torch.norm(pred_tgt - tgt_kpts, dim=-1)
         pred_inlier = (L2_dis < inlier_threshold)[0]
         inlier_count = torch.sum(pred_inlier)
         if inlier_count <= pre_inlier_count:
