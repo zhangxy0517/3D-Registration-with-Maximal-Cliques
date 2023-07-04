@@ -259,7 +259,7 @@ def test(folder):
     final_trans1 = post_refinement(initial_trans=final_trans[None], src_kpts=src_pts[None], tgt_kpts=tgt_pts[None], iters=20)
     re1, te1 = transformation_error(final_trans1[0], GTmat)
     if re1 <= re and te1 <= te:
-        final_trans = final_trans1
+        final_trans = final_trans1[0]
         re, te = re1, te1
         print('est_trans updated.')
 
