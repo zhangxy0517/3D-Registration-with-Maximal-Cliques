@@ -95,15 +95,15 @@ def post_refinement(initial_trans, src_kpts, tgt_kpts, iters, weights=None):
     for i in range(iters):
         pred_tgt = transform(src_kpts, initial_trans)
         L2_dis = torch.norm(pred_tgt - src_kpts, dim=-1)
-        pred_inlier = L2_dis < inlier_threshold
+        pred_inlier = (L2_dis < inlier_threshold)[0]
         inlier_count = torch.sum(pred_inlier)
         if inlier_count <= pre_inlier_count:
             break
         pre_inlier_count = inlier_count
         initial_trans = rigid_transform_3d(
-            A=src_kpts[pred_inlier, :],
-            B=tgt_kpts[pred_inlier, :],
-            weights=1 / (1 + (L2_dis / inlier_threshold) ** 2)[pred_inlier]
+            A=src_kpts[:, pred_inlier, :],
+            B=tgt_kpts[:, pred_inlier, :],
+            weights=1 / (1 + (L2_dis / inlier_threshold) ** 2)[:, pred_inlier]
         )
     return initial_trans
 
@@ -256,11 +256,12 @@ def test(folder):
 
     # RE TE
     re, te = transformation_error(final_trans, GTmat)
-    final_trans1 = post_refinement(initial_trans=final_trans, src_kpts=src_pts, tgt_kpts=tgt_pts, iters=20)
-    re1, te1 = transformation_error(final_trans1, GTmat)
+    final_trans1 = post_refinement(initial_trans=final_trans[None], src_kpts=src_pts[None], tgt_kpts=tgt_pts[None], iters=20)
+    re1, te1 = transformation_error(final_trans1[0], GTmat)
     if re1 <= re and te1 <= te:
         final_trans = final_trans1
         re, te = re1, te1
+        print('est_trans updated.')
 
     print(f'RE: %.2f, TE: %.2f' % (re, te))
     final_trans = final_trans.cpu().numpy()
