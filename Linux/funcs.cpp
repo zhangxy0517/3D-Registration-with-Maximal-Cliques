@@ -183,28 +183,28 @@ void feature_matching(PointCloudPtr& cloud_source, PointCloudPtr& cloud_target,
                       vector<vector<float>>& feature_source, vector<vector<float>>& feature_target, vector<Corre_3DMatch>& Corres)
 {
     int i, j;
-    pcl::PointCloud<pcl::SHOT352>::Ptr Feature_source(new pcl::PointCloud<pcl::SHOT352>);
-    pcl::PointCloud<pcl::SHOT352>::Ptr Feature_target(new pcl::PointCloud<pcl::SHOT352>);
+    pcl::PointCloud<pcl::FPFHSignature33>::Ptr Feature_source(new pcl::PointCloud<pcl::FPFHSignature33>);
+    pcl::PointCloud<pcl::FPFHSignature33>::Ptr Feature_target(new pcl::PointCloud<pcl::FPFHSignature33>);
     Feature_source->points.resize(feature_source.size());
     Feature_target->points.resize(feature_target.size());
     for (i = 0; i < feature_source.size(); i++)
     {
-        for (j = 0; j < 352; j++)
+        for (j = 0; j < 33; j++)
         {
-            if (j < feature_source[i].size()) Feature_source->points[i].descriptor[j] = feature_source[i][j];
-            else Feature_source->points[i].descriptor[j] = 0;
+            if (j < feature_source[i].size()) Feature_source->points[i].histogram[j] = feature_source[i][j];
+            else Feature_source->points[i].histogram[j] = 0;
         }
     }
     for (i = 0; i < feature_target.size(); i++)
     {
-        for (j = 0; j < 352; j++)
+        for (j = 0; j < 33; j++)
         {
-            if (j < feature_target[i].size()) Feature_target->points[i].descriptor[j] = feature_target[i][j];
-            else Feature_target->points[i].descriptor[j] = 0;
+            if (j < feature_target[i].size()) Feature_target->points[i].histogram[j] = feature_target[i][j];
+            else Feature_target->points[i].histogram[j] = 0;
         }
     }
     //
-    pcl::KdTreeFLANN<pcl::SHOT352> kdtree;
+    pcl::KdTreeFLANN<pcl::FPFHSignature33> kdtree;
     vector<int>Idx;
     vector<float>Dist;
     kdtree.setInputCloud(Feature_target);
@@ -220,6 +220,7 @@ void feature_matching(PointCloudPtr& cloud_source, PointCloudPtr& cloud_target,
         Corres.push_back(temp);
     }
 }
+
 void feature_matching(PointCloudPtr& cloud_source, PointCloudPtr& cloud_target, vector<LRF>LRFs_source, vector<LRF>LRFs_target,
 	vector<int>& Idx_source, vector<int>& Idx_target, vector<vector<float>>& feature_source, vector<vector<float>>& feature_target, vector<Corre>& Corres)
 {
