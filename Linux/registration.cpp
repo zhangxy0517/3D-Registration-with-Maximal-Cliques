@@ -984,17 +984,14 @@ bool registration(const string &name, string src_pointcloud, string des_pointclo
 			}
 		}
 		else {
-			//visualization(Overlap_src, Raw_src, Raw_des, selected, GTmat, GTmat, resolution);
 			if (found)
 			{
 				double new_re, new_te;
 				evaluation_est(best_est, GTmat, RE_thresh, TE_thresh, new_re, new_te);
 				if (new_re < RE && new_te < TE)
 				{
-					RE = new_re;
-					TE = new_te;
 					cout << "est_trans updated!!!" << endl;
-					cout << "RE=" << RE << " " << "TE=" << TE << endl;
+					cout << "RE=" << new_re << " " << "TE=" << new_te << endl;
 					cout << best_est << endl;
 				}
 				else {
@@ -1002,7 +999,8 @@ bool registration(const string &name, string src_pointcloud, string des_pointclo
 					cout << "RE=" << RE << " " << "TE=" << TE << endl;
 					cout << best_est << endl;
 				}
-
+				RE = new_re;
+				TE = new_te;
 				/*if (inlier_ratio < 0.05)
 				{
 					Corres_selected_visual(cloud_src, cloud_des, selected, resolution, 0.1, GTmat);
