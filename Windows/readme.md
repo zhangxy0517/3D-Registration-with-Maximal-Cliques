@@ -11,3 +11,4 @@ Before comiling, please make sure that the environment variables of `PCL` and `i
       $ nmake
       ```
 - Option 2: Use any IDE that can directly handle CMakeLists files to open the `CMakeLists.txt` in the **root** directory of MAC. Then you should have obtained a usable project and just build it. I recommend using [CLion](https://www.jetbrains.com/clion/). For Windows users: your IDE must be set for `x64`.
+- NOTICE: Please compile in **RELEASE** mode!
