@@ -30,4 +30,5 @@
       $ cmake -DCMAKE_BUILD_TYPE=Release ..
       $ make
       ```
-- Option 2: Use any IDE that can directly handle CMakeLists files to open the `CMakeLists.txt` in the **root** directory of MAC. Then you should have obtained a usable project and just build it. I recommend using [CLion](https://www.jetbrains.com/clion/). 
+- Option 2: Use any IDE that can directly handle CMakeLists files to open the `CMakeLists.txt` in the **root** directory of MAC. Then you should have obtained a usable project and just build it. I recommend using [CLion](https://www.jetbrains.com/clion/).
+- NOTICE: Please compile in **RELEASE** mode!
