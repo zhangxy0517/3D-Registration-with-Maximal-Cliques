@@ -177,28 +177,6 @@ def extract_fcgf_features(pcd, downsample):
     return xyz_down.astype(np.float32), features.detach().cpu().numpy()
 
 
-def visualize_graph(graph):
-    visual_style = {}
-    # Define colors used for outdegree visualization
-    colours = ['#fecc5c', '#a31a1c']
-    # Set bbox and margin
-    visual_style["bbox"] = (3000, 3000)
-    visual_style["margin"] = 17
-    # Set vertex colours
-    visual_style["vertex_color"] = 'grey'
-    # Set vertex size
-    visual_style["vertex_size"] = 20
-    # Set vertex lable size
-    visual_style["vertex_label_size"] = 8
-    # Don't curve the edges
-    visual_style["edge_curved"] = False
-    # Set the layout
-    my_layout = graph.layout_fruchterman_reingold()
-    visual_style["layout"] = my_layout
-    # Plot the graph
-    out_fig_name = 'output.png'
-    plot(graph, out_fig_name, **visual_style)
-
 def test(folder):
     desc = "fcgf"
     GTmat_path = folder + '/GTmat.txt' # ground truth transformation for calculate RE TE
