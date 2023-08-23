@@ -163,6 +163,8 @@ def extract_fcgf_features(pcd, downsample):
         normalize_feature=True
     ).cuda()
     checkpoints = torch.load('mise/ResUNetBN2C-feat32-3dmatch-v0.05.pth')
+    # # 3DMatch: http://node2.chrischoy.org/data/projects/DGR/ResUNetBN2C-feat32-3dmatch-v0.05.pth
+    # # KITTI: http://node2.chrischoy.org/data/projects/DGR/ResUNetBN2C-feat32-kitti-v0.3.pth
     fcgf_model.load_state_dict(checkpoints['state_dict'])
     fcgf_model.eval()
 
