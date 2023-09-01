@@ -142,7 +142,7 @@ void demo(){
     float des_resolution = MeshResolution_mr_compute(des_cloud);
     float resolution = (src_resolution + des_resolution) / 2;
 
-    float downsample = 0.05;
+    float downsample = 5 * resolution;
     Voxel_grid_downsample(src_cloud, new_src_cloud, downsample);
     Voxel_grid_downsample(des_cloud, new_des_cloud, downsample);
     vector<vector<float>> src_feature, des_feature;
