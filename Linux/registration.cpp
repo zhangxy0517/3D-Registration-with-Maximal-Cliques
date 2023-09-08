@@ -357,6 +357,24 @@ bool registration(const string &name, string src_pointcloud, string des_pointclo
 		cout << " NO INLIERS！ " << endl;
 	}
 	inlier_ratio = inlier_num / (total_num / 1.0);
+
+	double RE_thresh, TE_thresh, inlier_thresh;
+	if (name == "KITTI")
+	{
+		RE_thresh = 5;
+		TE_thresh = 60;
+		inlier_thresh = 0.6;
+	}
+	else if (name == "3dmatch" || name == "3dlomatch")
+	{
+		RE_thresh = 15;
+		TE_thresh = 30;
+		inlier_thresh = 0.1;
+	}
+	else if (name == "U3M") {
+		inlier_thresh = 5 * resolution;
+	}
+	
 	std::chrono::time_point<std::chrono::system_clock> start, end;
 	std::chrono::duration<double> elapsed_time, total_time;
 
@@ -459,7 +477,7 @@ bool registration(const string &name, string src_pointcloud, string des_pointclo
 	}
 
 	start = std::chrono::system_clock::now();
-	Eigen::MatrixXf Graph = Graph_construction(correspondence, resolution, sc2, name, descriptor);
+	Eigen::MatrixXf Graph = Graph_construction(correspondence, resolution, sc2, name, descriptor, inlier_thresh);
 	end = std::chrono::system_clock::now();
 	elapsed_time = end - start;
 	time_consumption.push_back(elapsed_time.count());
@@ -796,22 +814,7 @@ bool registration(const string &name, string src_pointcloud, string des_pointclo
 		}
 		
 		/******************************************registraion***************************************************/
-		double RE_thresh, TE_thresh, inlier_thresh;
-		if (name == "KITTI")
-		{
-			RE_thresh = 5;
-			TE_thresh = 60;
-			inlier_thresh = 0.6;
-		}
-		else if (name == "3dmatch" || name == "3dlomatch")
-		{
-			RE_thresh = 15;
-			TE_thresh = 30;
-			inlier_thresh = 0.1;
-		}
-		else if (name == "U3M") {
-			inlier_thresh = 5 * resolution;
-		}
+		
 		RE = RE_thresh;
 		TE = TE_thresh;
 		Eigen::Matrix4d best_est;
