@@ -134,7 +134,7 @@ void Correct_corre_select(PointCloudPtr cloud_s, PointCloudPtr cloud_t, vector<C
 	Eigen::Matrix4f& GT_mat, vector<Corre>& Corres_selected);
 double OTSU_thresh(/*vector<Vote> Vote_score*/Eigen::VectorXd values);
 double Distance(pcl::PointXYZ& A, pcl::PointXYZ& B);
-Eigen::MatrixXf Graph_construction(vector<Corre_3DMatch>& correspondence, float resolution, bool sc2, const string &name,const string &descriptor);
+Eigen::MatrixXf Graph_construction(vector<Corre_3DMatch>& correspondence, float resolution, bool sc2, const string &name,const string &descriptor, float inlier_thresh);
 Eigen::MatrixXf Graph_construction(vector<Corre_3DMatch>& correspondence, float resolution, bool sc2, float cmp_thresh);
 /**********************************************3DCorres_methods***************************************/
 //descriptor
