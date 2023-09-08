@@ -71,7 +71,7 @@ float wasserstein_dis(Corre_3DMatch& c1, Corre_3DMatch &c2)
 	return dis;
 }
 
-Eigen::MatrixXf Graph_construction(vector<Corre_3DMatch>& correspondence, float resolution, bool sc2, const string &name, const string &descriptor) {
+Eigen::MatrixXf Graph_construction(vector<Corre_3DMatch>& correspondence, float resolution, bool sc2, const string &name, const string &descriptor, float inlier_thresh) {
 	int size = correspondence.size();
 	Eigen::MatrixXf cmp_score;
 	cmp_score.resize(size, size);
@@ -90,7 +90,7 @@ Eigen::MatrixXf Graph_construction(vector<Corre_3DMatch>& correspondence, float 
 				src_dis = Distance(c1.src, c2.src);
 				des_dis = Distance(c1.des, c2.des);
 				dis = abs(src_dis - des_dis);
-				score = 1 - (dis * dis) / (0.6 * 0.6);
+				score = 1 - (dis * dis) / (inlier_thresh * inlier_thresh);
 				//score = exp(-dis * dis);
 				score = (score < thresh) ? 0 : score;//fcgf 0.9999 fpfh 0.9
 				cmp_score(i, j) = score;
@@ -113,7 +113,7 @@ Eigen::MatrixXf Graph_construction(vector<Corre_3DMatch>& correspondence, float 
 
 				if (descriptor == "predator" || low_inlieratio)
 				{
-					score = 1 - (dis * dis) / (0.1 * 0.1);
+					score = 1 - (dis * dis) / (inlier_thresh * inlier_thresh);
 					if (add_overlap || low_inlieratio)
 					{
                         score = (score < 0.99) ? 0 : score; //fpfh/fcgf overlap 0.99
