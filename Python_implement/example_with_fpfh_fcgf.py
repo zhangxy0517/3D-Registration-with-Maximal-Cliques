@@ -90,9 +90,7 @@ def rigid_transform_3d(A, B, weights=None, weight_threshold=0):
     return integrate_trans(R, t)
 
 
-def post_refinement(initial_trans, src_kpts, tgt_kpts, iters, weights=None):
-
-    inlier_threshold = 0.1
+def post_refinement(initial_trans, src_kpts, tgt_kpts, iters, inlier_threshold = 0.1, weights=None,):
     pre_inlier_count = 0
     for i in range(iters):
         pred_tgt = transform(src_kpts, initial_trans)
@@ -212,10 +210,11 @@ def test(folder):
     GTmat = torch.from_numpy(GTmat).cuda()
     t1 = time.perf_counter()
     # graph construction
+    inlier_threshold = 0.1
     src_dist = ((src_pts[:, None, :] - src_pts[None, :, :]) ** 2).sum(-1) ** 0.5
     tgt_dist = ((tgt_pts[:, None, :] - tgt_pts[None, :, :]) ** 2).sum(-1) ** 0.5
     cross_dis = torch.abs(src_dist - tgt_dist)
-    FCG = torch.clamp(1 - cross_dis ** 2 / 0.1 ** 2, min=0)
+    FCG = torch.clamp(1 - cross_dis ** 2 / inlier_threshold ** 2, min=0)
     FCG = FCG - torch.diag_embed(torch.diag(FCG))
     FCG[FCG < 0.99] = 0
     SCG = torch.matmul(FCG, FCG) * FCG
@@ -280,7 +279,7 @@ def test(folder):
         tensor_list_A.append(batch_A)
         tensor_list_B.append(batch_B)
 
-    inlier_threshold = 0.1
+    
     max_score = 0
     final_trans = torch.eye(4)
     for i in range(len(tensor_list_A)):
@@ -297,7 +296,7 @@ def test(folder):
 
     # RE TE
     re, te = transformation_error(final_trans, GTmat)
-    final_trans1 = post_refinement(initial_trans=final_trans[None], src_kpts=src_pts[None], tgt_kpts=tgt_pts[None], iters=20)
+    final_trans1 = post_refinement(final_trans[None], src_pts[None], tgt_pts[None], 20, inlier_threshold)
 
     re1, te1 = transformation_error(final_trans1[0], GTmat)
     if re1 <= re and te1 <= te:
