@@ -90,7 +90,7 @@ def rigid_transform_3d(A, B, weights=None, weight_threshold=0):
     return integrate_trans(R, t)
 
 
-def post_refinement(initial_trans, src_kpts, tgt_kpts, iters, inlier_threshold = 0.1, weights=None,):
+def post_refinement(initial_trans, src_kpts, tgt_kpts, iters, inlier_threshold = 0.1, weights=None):
     pre_inlier_count = 0
     for i in range(iters):
         pred_tgt = transform(src_kpts, initial_trans)
