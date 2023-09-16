@@ -254,7 +254,11 @@ def test(folder):
                     max_size = len(mac) > max_size and len(mac) or max_size
 
     filtered_clique_ind = list(set(clique_ind_of_node))
-    filtered_clique_ind.remove(-1)
+    try:
+        filtered_clique_ind.remove(-1)
+    except:
+        pass
+        
     print(f'After filtered: %d' % len(filtered_clique_ind))
     group = []
     for s in range(3, max_size + 1):
@@ -266,6 +270,8 @@ def test(folder):
     tensor_list_A = []
     tensor_list_B = []
     for i in range(len(group)):
+        if len(group[i]) == 0:
+            continue
         batch_A = src_pts[list(macs[group[i][0]])][None]
         batch_B = tgt_pts[list(macs[group[i][0]])][None]
         if len(group) == 1:
