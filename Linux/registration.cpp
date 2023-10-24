@@ -1277,7 +1277,7 @@ bool registration(PointCloudPtr& src, PointCloudPtr& des, vector<Corre_3DMatch>&
     /******************************************配准部分***************************************************/
     double RE_thresh, TE_thresh, inlier_thresh;
     Eigen::Matrix4d best_est;
-    inlier_thresh = 0.1;
+    inlier_thresh = 10*resolution;
     bool found = false;
     double best_score = 0;
     vector<Corre_3DMatch>selected;
