@@ -1,4 +1,4 @@
-# Python implementation of basic MAC 
+# Python Implementation of Basic MAC (For Demo Only)
 ## Required Pip packages
 ```
 numpy==1.23.0
