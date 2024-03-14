@@ -70,6 +70,8 @@ All tested datasets can be found at this [link](https://pan.baidu.com/s/1KZS2Lcc
 
 <img src="https://github.com/zhangxy0517/3D-Registration-with-Maximal-Cliques/blob/main/figures/table.png" width="600px">
 
+## Projects using MAC
+
 ## Citation
 If you find this code useful for your work or use it in your project, please consider citing:
 
