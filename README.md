@@ -71,6 +71,7 @@ All tested datasets can be found at this [link](https://pan.baidu.com/s/1KZS2Lcc
 <img src="https://github.com/zhangxy0517/3D-Registration-with-Maximal-Cliques/blob/main/figures/table.png" width="600px">
 
 ## Projects using MAC
+* [Zhang et al., FastMAC: Stochastic Spectral Sampling of Correspondence Graph (CVPR 2024)](https://github.com/Forrest-110/FastMAC)
 
 ## Citation
 If you find this code useful for your work or use it in your project, please consider citing:
