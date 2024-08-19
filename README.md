@@ -85,3 +85,12 @@ If you find this code useful for your work or use it in your project, please con
   year={2023}
 }
 ```
+```shell
+@article{yang2024mac,
+  title={MAC: Maximal Cliques for 3D Registration},
+  author={Yang, Jiaqi and Zhang, Xiyu and Wang, Peng and Guo, Yulan and Sun, Kun and Wu, Qiao and Zhang, Shikun and Zhang, Yanning},
+  journal={IEEE Transactions on Pattern Analysis and Machine Intelligence},
+  year={2024},
+  publisher={IEEE}
+}
+```
