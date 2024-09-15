@@ -1,4 +1,4 @@
-# Compiling on Windows
+# Compiling on Windows (No longer maintained. Please check for updates in the Linux version.)
 Before comiling, please make sure that the environment variables of `PCL` and `igraph` have been correctly added to the system.
 
 - Option 1 (purely on the command line): Use `nmake`(on Windows with Microsoft Visual Studio).
