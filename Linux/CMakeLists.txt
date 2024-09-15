@@ -21,5 +21,8 @@ link_directories(${PCL_LIBRARY_DIRS})
 
 add_definitions(${PCL_DEFINITIONS})
 add_executable(MAC main.cpp desc_dec.cpp funcs.cpp PCR.cpp registration.cpp visualization.cpp Eva.h)
-
+if (igraph_VERSION VERSION_LESS "0.10.6")
+    target_compile_definitions(MAC PRIVATE IGRAPH_VERSION_OLD)
+    message("igraph version is lower than 0.10.6, memory issues will happen!")
+endif ()
 target_link_libraries(MAC ${PCL_LIBRARIES} igraph::igraph)
