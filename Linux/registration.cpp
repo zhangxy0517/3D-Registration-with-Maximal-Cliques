@@ -23,6 +23,248 @@ extern bool add_overlap;
 extern bool low_inlieratio;
 extern bool no_logs;
 
+#ifdef IGRAPH_VERSION_OLD
+void find_largest_clique_of_node(Eigen::MatrixXf& Graph, igraph_vector_ptr_t* cliques, vector<Corre_3DMatch>& correspondence, node_cliques* result, vector<int>& remain, int num_node, int est_num, string descriptor) {
+
+    int* vis = new int[igraph_vector_ptr_size(cliques)];
+	memset(vis, 0, igraph_vector_ptr_size(cliques));
+#pragma omp parallel for
+	for (int i = 0; i < num_node; i++)
+	{
+		result[i].clique_index = -1;
+		result[i].clique_size = 0;
+		result[i].clique_weight = 0;
+		result[i].clique_num = 0;
+	}
+
+	for (int i = 0; i < remain.size(); i++)
+	{
+		igraph_vector_t* v = (igraph_vector_t*)VECTOR(*cliques)[remain[i]];
+		float weight = 0;
+		int length = igraph_vector_size(v);
+		for (int j = 0; j < length; j++)
+		{
+			int a = (int)VECTOR(*v)[j];
+			for (int k = j + 1; k < length; k++)
+			{
+				int b = (int)VECTOR(*v)[k];
+				weight += Graph(a, b);
+			}
+		}
+		for (int j = 0; j < length; j++)
+		{
+			int k = (int)VECTOR(*v)[j];
+			if (result[k].clique_weight < weight)
+			{
+				result[k].clique_index = remain[i];
+				vis[remain[i]]++;
+				result[k].clique_size = length;
+				result[k].clique_weight = weight;
+			}
+		}
+	}
+
+#pragma omp parallel for
+	for (int i = 0; i < remain.size(); i++)
+	{
+		if (vis[remain[i]] == 0) {
+			igraph_vector_t* v = (igraph_vector_t*)VECTOR(*cliques)[remain[i]];
+			igraph_vector_destroy(v);
+		}
+	}
+
+	vector<int>after_delete;
+	for (int i = 0; i < num_node; i++)
+	{
+		if (result[i].clique_index < 0)
+		{
+			continue;
+		}
+		if (vis[result[i].clique_index] > 0)
+		{
+			vis[result[i].clique_index] = 0;
+			after_delete.push_back(result[i].clique_index);
+		}
+		else if (vis[result[i].clique_index] == 0) {
+			result[i].clique_index = -1;
+		}
+	}
+	remain.clear();
+	remain = after_delete;
+
+	// Normal consistency
+//	vector<int>after_selection;
+//#pragma omp parallel for
+//	for (int i = 0; i < num_node; i++)
+//	{
+//		if (result[i].clique_index < 0)
+//		{
+//			continue;
+//		}
+//		igraph_vector_t* v = (igraph_vector_t*)VECTOR(*cliques)[result[i].clique_index];
+//		int length = igraph_vector_size(v);
+//		Eigen::VectorXi angle_cmp_vector;
+//		angle_cmp_vector.resize(length);
+//		angle_cmp_vector.setZero();
+//		for (int j = 0; j < length; j++)
+//		{
+//			int a = (int)VECTOR(*v)[j];
+//			for (int k = j + 1; k < length; k++) {
+//				int b = (int)VECTOR(*v)[k];
+//				float angle_src = getAngleTwoVectors(correspondence[a].src_norm, correspondence[b].src_norm);
+//				float angle_des = getAngleTwoVectors(correspondence[a].des_norm, correspondence[b].des_norm);
+//				float angle_cmp = abs(sin(angle_src) - sin(angle_des));
+//				if (angle_cmp < 0.1)
+//				{
+//					angle_cmp_vector[k]++;
+//					angle_cmp_vector[j]++;
+//				}
+//			}
+//		}
+//		int sum = angle_cmp_vector.sum();
+//#pragma omp critical
+//		{
+//			if (sum > length * (length - 1) / 2) //fpfh 0.1 fcgf0.05
+//			{
+//				after_selection.push_back(result[i].clique_index);
+//			}
+//			else
+//			{
+//				result[i].clique_index = -1;
+//				//igraph_vector_destroy(v);
+//			}
+//		}
+//	}
+//	remain.clear();
+//	remain = after_selection;
+//	after_selection.clear();
+
+	//reduce the number of cliques
+	if (remain.size() > est_num)
+	{
+		vector<int>after_decline;
+		vector<Vote>clique_score;
+		for (int i = 0; i < num_node; i++)
+		{
+			if (result[i].clique_index < 0)
+			{
+				continue;
+			}
+			Vote t;
+			t.index = result[i].clique_index;
+			t.score = result[i].clique_weight;
+			clique_score.push_back(t);
+		}
+		sort(clique_score.begin(), clique_score.end(), compare_vote_score);
+		for (int i = 0; i < est_num; i++)
+		{
+			after_decline.push_back(clique_score[i].index);
+		}
+		remain.clear();
+		remain = after_decline;
+        clique_score.clear();
+	}
+    delete[] vis;
+	return;
+}
+#else
+void find_largest_clique_of_node(Eigen::MatrixXf& Graph, igraph_vector_int_list_t* cliques, vector<Corre_3DMatch>& correspondence, node_cliques* result, vector<int>& remain, int num_node, int est_num, string descriptor) {
+    int* vis = new int[igraph_vector_int_list_size(cliques)];
+    memset(vis, 0, igraph_vector_int_list_size(cliques));
+#pragma omp parallel for
+    for (int i = 0; i < num_node; i++)
+    {
+        result[i].clique_index = -1;
+        result[i].clique_size = 0;
+        result[i].clique_weight = 0;
+        result[i].clique_num = 0;
+    }
+
+    for (int i = 0; i < remain.size(); i++)
+    {
+        igraph_vector_int_t* v = igraph_vector_int_list_get_ptr(cliques, remain[i]);
+        //计算团的权重
+        float weight = 0;
+        int length = igraph_vector_int_size(v);
+        for (int j = 0; j < length; j++)
+        {
+            int a = (int)VECTOR(*v)[j];
+            for (int k = j + 1; k < length; k++)
+            {
+                int b = (int)VECTOR(*v)[k];
+                weight += Graph(a, b);
+            }
+        }
+        for (int j = 0; j < length; j++)
+        {
+            int k = (int)VECTOR(*v)[j];
+            if (result[k].clique_weight < weight)
+            {
+                result[k].clique_index = remain[i];
+                vis[remain[i]]++;
+                result[k].clique_size = length;
+                result[k].clique_weight = weight;
+            }
+        }
+    }
+
+#pragma omp parallel for
+    for (int i = 0; i < remain.size(); i++)
+    {
+        if (vis[remain[i]] == 0) {
+            igraph_vector_int_t* v = igraph_vector_int_list_get_ptr(cliques, remain[i]);
+            igraph_vector_int_destroy(v);
+        }
+    }
+
+    vector<int>after_delete;
+    for (int i = 0; i < num_node; i++)
+    {
+        if (result[i].clique_index < 0)
+        {
+            continue;
+        }
+        if (vis[result[i].clique_index] > 0)
+        {
+            vis[result[i].clique_index] = 0;
+            after_delete.push_back(result[i].clique_index);
+        }
+        else if (vis[result[i].clique_index] == 0) {
+            result[i].clique_index = -1;
+        }
+    }
+    remain.clear();
+    remain = after_delete;
+    //reduce the number of cliques（控制在 2000）
+    if (remain.size() > est_num)
+    {
+        vector<int>after_decline;
+        vector<Vote>clique_score;
+        for (int i = 0; i < num_node; i++)
+        {
+            if (result[i].clique_index < 0)
+            {
+                continue;
+            }
+            Vote t;
+            t.index = result[i].clique_index;
+            t.score = result[i].clique_weight;
+            clique_score.push_back(t);
+        }
+        sort(clique_score.begin(), clique_score.end(), compare_vote_score);
+        for (int i = 0; i < est_num; i++)
+        {
+            after_decline.push_back(clique_score[i].index);
+        }
+        remain.clear();
+        remain = after_decline;
+        clique_score.clear();
+    }
+    delete[] vis;
+    return;
+}
+#endif
+
 void calculate_gt_overlap(vector<Corre_3DMatch>&corre, PointCloudPtr &src, PointCloudPtr &tgt, Eigen::Matrix4d &GTmat,  bool ind, double GT_thresh, double &max_corr_weight){
     PointCloudPtr src_trans(new pcl::PointCloud<pcl::PointXYZ>);
     pcl::transformPointCloud(*src, *src_trans, GTmat);
@@ -674,107 +916,54 @@ bool registration(const string &name, string src_pointcloud, string des_pointclo
 		igraph_vector_t weights;
 		igraph_vector_init(&weights, Graph.rows() * (Graph.cols() - 1) / 2);
 		igraph_matrix_init(&g_mat, Graph.rows(), Graph.cols());
-
-		if (Corr_select)
-		{
-			if (cluster_threshold > 3) {
-				double f = 10;
-				while (1)
-				{
-					if (f * max(OTSU, total_factor) > cluster_factor[49].score)
-					{
-						f -= 0.05;
-					}
-					else {
-						break;
-					}
-				}
-				for (int i = 0; i < Graph.rows(); i++)
-				{
-					if (Match_inlier[i] && cluster_factor_bac[i].score > f * max(OTSU, total_factor))
-					{
-						for (int j = i + 1; j < Graph.cols(); j++)
-						{
-							if (Match_inlier[j] && cluster_factor_bac[j].score > f * max(OTSU, total_factor))
-							{
-								MATRIX(g_mat, i, j) = Graph(i, j);
-							}
-						}
-					}
-				}
-			}
-			else
-			{
-				for (int i = 0; i < Graph.rows(); i++)
-				{
-					if (Match_inlier[i])
-					{
-						for (int j = i + 1; j < Graph.cols(); j++)
-						{
-							if (Match_inlier[j])
-							{
-								MATRIX(g_mat, i, j) = Graph(i, j);
-							}
-						}
-					}
-				}
-			}
-
-		}
-		else {
-			if (cluster_threshold > 3 && correspondence.size() > 50/*max(OTSU, total_factor) > 0.3*/) //reduce the graph size
-			{
-				double f = 10;
-				while (1)
-				{
-					if (f * max(OTSU, total_factor) > cluster_factor[49].score)
-					{
-						f -= 0.05;
-					}
-					else {
-						break;
-					}
-				}
-				for (int i = 0; i < Graph.rows(); i++)
-				{
-					if (cluster_factor_bac[i].score > f * max(OTSU, total_factor))
-					{
-						for (int j = i + 1; j < Graph.cols(); j++)
-						{
-							if (cluster_factor_bac[j].score > f * max(OTSU, total_factor))
-							{
-								MATRIX(g_mat, i, j) = Graph(i, j);
-							}
-						}
-					}
-				}
-			}
-			else {
-				for (int i = 0; i < Graph.rows(); i++)
-				{
-					for (int j = i + 1; j < Graph.cols(); j++)
-					{
-						if (Graph(i, j))
-						{
-							MATRIX(g_mat, i, j) = Graph(i, j);
-						}
-					}
-				}
-			}
-		}
-
+#ifdef IGRAPH_VERSION_OLD
+        if (cluster_threshold > 3 && correspondence.size() > 50/*max(OTSU, total_factor) > 0.3*/) //reduce the graph size
+        {
+            double f = 10;
+            while (1)
+            {
+                if (f * max(OTSU, total_factor) > cluster_factor[49].score)
+                {
+                    f -= 0.05;
+                }
+                else {
+                    break;
+                }
+            }
+            for (int i = 0; i < Graph.rows(); i++)
+            {
+                if (cluster_factor_bac[i].score > f * max(OTSU, total_factor))
+                {
+                    for (int j = i + 1; j < Graph.cols(); j++)
+                    {
+                        if (cluster_factor_bac[j].score > f * max(OTSU, total_factor))
+                        {
+                            MATRIX(g_mat, i, j) = Graph(i, j);
+                        }
+                    }
+                }
+            }
+        }
+        else {
+            for (int i = 0; i < Graph.rows(); i++) {
+                for (int j = i + 1; j < Graph.cols(); j++) {
+                    if (Graph(i, j)) {
+                        MATRIX(g_mat, i, j) = Graph(i, j);
+                    }
+                }
+            }
+        }
 		igraph_set_attribute_table(&igraph_cattribute_table);
-		igraph_weighted_adjacency(&g, &g_mat, IGRAPH_ADJ_UNDIRECTED, 0, 1);
-		const char* att = "weight";
-		EANV(&g, att, &weights);
-		
-		//find all maximal cliques
-		igraph_vector_ptr_t cliques;
-		igraph_vector_ptr_init(&cliques, 0);
-		start = std::chrono::system_clock::now();
+        igraph_weighted_adjacency(&g, &g_mat, IGRAPH_ADJ_UNDIRECTED, 0, 1);
+        const char* att = "weight";
+        EANV(&g, att, &weights);
 
-		igraph_maximal_cliques(&g, &cliques, 3, 0); //3dlomatch 4 3dmatch; 3 Kitti  4
-		//igraph_largest_cliques(&g, &cliques);
+        //find all maximal cliques
+        igraph_vector_ptr_t cliques;
+        igraph_vector_ptr_init(&cliques, 0);
+        start = std::chrono::system_clock::now();
+
+        igraph_maximal_cliques(&g, &cliques, 3, 0); //3dlomatch 4 3dmatch; 3 Kitti  4
 		end = std::chrono::system_clock::now();
 		elapsed_time = end - start;
 		time_consumption.push_back(elapsed_time.count());
@@ -896,6 +1085,211 @@ bool registration(const string &name, string src_pointcloud, string des_pointclo
 		//free memory
 		igraph_vector_ptr_destroy(&cliques);
 		cout << success_num << " : " << total_estimate << " : " << clique_num << endl;
+#else
+        // 高版本的实现
+        //减少图规模
+        if (cluster_threshold > 3 && correspondence.size() > 50) // default 3 kitti-lc 2
+        {
+            float f = 10;
+            while (1)
+            {
+                if (f * max(OTSU, total_factor) > cluster_factor[49].score)
+                {
+                    f -= 0.05;
+                }
+                else {
+                    break;
+                }
+            }
+            for (int i = 0; i < Graph.rows(); i++)
+            {
+                if (cluster_factor_bac[i].score > f * max(OTSU, total_factor))
+                {
+                    for (int j = i + 1; j < Graph.cols(); j++)
+                    {
+                        if (cluster_factor_bac[j].score > f * max(OTSU, total_factor))
+                        {
+                            MATRIX(g_mat, i, j) = Graph(i, j);
+                            MATRIX(g_mat, j, i) = MATRIX(g_mat, i, j);
+                        }
+                    }
+                }
+            }
+        }
+        else {
+            for (int i = 0; i < Graph.rows(); i++)
+            {
+                for (int j = i + 1; j < Graph.cols(); j++)
+                {
+                    if (Graph(i, j))
+                    {
+                        MATRIX(g_mat, i, j) = Graph(i, j);
+                        MATRIX(g_mat, j, i) = MATRIX(g_mat, i, j);
+                    }
+                }
+            }
+        }
+
+        igraph_set_attribute_table(&igraph_cattribute_table);
+        igraph_vector_t weight;
+        igraph_vector_init(&weight, 0);
+        igraph_weighted_adjacency(&g, &g_mat, IGRAPH_ADJ_UNDIRECTED, &weight, IGRAPH_LOOPS_ONCE);
+
+
+        //找出所有最大团
+        igraph_vector_int_list_t cliques;
+        igraph_vector_int_list_init(&cliques, 0);
+        start = std::chrono::system_clock::now();
+
+        int min_clique_size = 3;
+        if(kitti){
+            min_clique_size = 4;
+        }
+        int max_clique_size = 0;
+        bool recomputecliques = true;
+        int clique_num = 0; //默认无上限
+        int iter_num = 1;
+
+        igraph_maximal_cliques(&g, &cliques, min_clique_size,  max_clique_size); //3dlomatch 3 3dmatch; 3 Kitti 4 (说明)
+        clique_num = igraph_vector_int_list_size(&cliques);
+        //控制搜索到的数量
+    //    while(recomputecliques){
+    //        igraph_maximal_cliques(&g, &cliques, min_clique_size,  max_clique_size); //3dlomatch 3 3dmatch; 3 Kitti 4 (说明)
+    //        clique_num = igraph_vector_int_list_size(&cliques);
+    //        if(clique_num > 10000000 && iter_num <= 5){
+    //            max_clique_size = 15;
+    //            min_clique_size +=iter_num;
+    //            iter_num++;
+    //            igraph_vector_int_list_destroy(&cliques);
+    //            igraph_vector_int_list_init(&cliques, 0);
+    //            cout << "clique number " << clique_num << " is too large! recomputing .." << endl;
+    //        }
+    //        else{
+    //            recomputecliques = false;
+    //        }
+    //    }
+
+        elapsed_time = end - start;
+        time_consumption.push_back(elapsed_time.count());
+        total_time += elapsed_time;
+
+        if (clique_num == 0) {
+            //若搜索不到团，提示无法配准
+            cout << " NO CLIQUES! " << endl;
+            return false;
+        }
+        cout << " clique computation: " << elapsed_time.count() << endl;
+
+        //数据清理
+        igraph_destroy(&g);
+        igraph_matrix_destroy(&g_mat);
+
+        vector<int>remain;
+        start = std::chrono::system_clock::now();
+        for (int i = 0; i < clique_num; i++)
+        {
+            remain.push_back(i);
+        }
+        node_cliques* N_C = new node_cliques[(int)total_num];
+        find_largest_clique_of_node(Graph, &cliques, correspondence, N_C, remain, total_num, max_est_num, descriptor);
+        end = std::chrono::system_clock::now();
+        elapsed_time = end - start;
+        time_consumption.push_back(elapsed_time.count());
+        total_time += elapsed_time;
+        cout << " clique selection: " << elapsed_time.count() << endl;
+
+        PointCloudPtr src_corr_pts(new pcl::PointCloud<pcl::PointXYZ>);
+        PointCloudPtr des_corr_pts(new pcl::PointCloud<pcl::PointXYZ>);
+        for (size_t i = 0; i < correspondence.size(); i++)
+        {
+            src_corr_pts->push_back(correspondence[i].src);
+            des_corr_pts->push_back(correspondence[i].des);
+        }
+
+        /******************************************registraion***************************************************/
+
+        RE = RE_thresh;
+        TE = TE_thresh;
+        Eigen::Matrix4d best_est;
+
+        bool found = false;
+        double best_score = 0;
+        vector<Corre_3DMatch>selected;
+        vector<int>corre_index;
+        start = std::chrono::system_clock::now();
+        total_estimate = remain.size();
+    #pragma omp parallel for
+        for (int i = 0; i < remain.size(); i++)
+        {
+            vector<Corre_3DMatch>Group;
+            vector<int>selected_index;
+            igraph_vector_int_t* v = igraph_vector_int_list_get_ptr(&cliques, remain[i]);
+            int group_size = igraph_vector_int_size(v);
+            for (int j = 0; j < group_size; j++)
+            {
+                Corre_3DMatch C = correspondence[VECTOR(*v)[j]];
+                Group.push_back(C);
+                selected_index.push_back(VECTOR(*v)[j]);
+            }
+            //igraph_vector_destroy(v);
+            Eigen::Matrix4d est_trans;
+            //evaluate cliques
+            double score = evaluation_trans(Group, correspondence, src_corr_pts, des_corr_pts, weight_thresh, est_trans, inlier_thresh, metric,raw_des_resolution, instance_equal);
+
+            if (GT_cmp_mode)
+            {
+                //GT已知
+                if (score > 0)
+                {
+                    //评估est
+                    double re, te;
+                    bool success = evaluation_est(est_trans, GTmat, 15, 30, re, te);
+    #pragma omp critical
+                    {
+                        success_num = success ? success_num + 1 : success_num;
+                        if (success && re < RE && te < TE)
+                        {
+                            RE = re;
+                            TE = te;
+                            best_est = est_trans;
+                            best_score = score;
+                            selected = Group;
+                            corre_index = selected_index;
+                            found = true;
+                        }
+                    }
+                }
+            }
+            else {
+                //GT未知
+                if (score > 0)
+                {
+    #pragma omp critical
+                    {
+                        if (best_score < score)
+                        {
+                            best_score = score;
+                            best_est = est_trans;
+                            selected = Group;
+                            corre_index = selected_index;
+                        }
+                    }
+                }
+            }
+            Group.clear();
+            Group.shrink_to_fit();
+            selected_index.clear();
+            selected_index.shrink_to_fit();
+        }
+        end = std::chrono::system_clock::now();
+        elapsed_time = end - start;
+        time_consumption.push_back(elapsed_time.count());
+        total_time += elapsed_time;
+        cout << " hypothesis generation & evaluation: " << elapsed_time.count() << endl;
+        //释放内存空间
+        igraph_vector_int_list_destroy(&cliques);
+        cout << success_num << " : " << total_estimate << " : " << clique_num << endl;
+#endif
 		Eigen::MatrixXd tmp_best;
 
 		if (name == "U3M")
@@ -1186,7 +1580,7 @@ bool registration(PointCloudPtr& src, PointCloudPtr& des, vector<Corre_3DMatch>&
     igraph_vector_t weights;
     igraph_vector_init(&weights, Graph.rows() * (Graph.cols() - 1) / 2);
     igraph_matrix_init(&g_mat, Graph.rows(), Graph.cols());
-
+# ifdef IGRAPH_VERSION_OLD
     if (cluster_threshold > 3 && correspondence.size() > 100 /*max(OTSU, total_factor) > 0.3*/) //减少图规模
     {
         double f = 10;
@@ -1325,6 +1719,175 @@ bool registration(PointCloudPtr& src, PointCloudPtr& des, vector<Corre_3DMatch>&
     //释放内存空间
     igraph_vector_ptr_destroy(&cliques);
     cout << total_estimate << " : " << clique_num << endl;
+#else
+    if (cluster_threshold > 3 && correspondence.size() > 100) // default 3 kitti-lc 2
+    {
+        float f = 10;
+        while (1)
+        {
+            if (f * max(OTSU, total_factor) > cluster_factor[49].score)
+            {
+                f -= 0.05;
+            }
+            else {
+                break;
+            }
+        }
+        for (int i = 0; i < Graph.rows(); i++)
+        {
+            if (cluster_factor_bac[i].score > f * max(OTSU, total_factor))
+            {
+                for (int j = i + 1; j < Graph.cols(); j++)
+                {
+                    if (cluster_factor_bac[j].score > f * max(OTSU, total_factor))
+                    {
+                        MATRIX(g_mat, i, j) = Graph(i, j);
+                        MATRIX(g_mat, j, i) = MATRIX(g_mat, i, j);
+                    }
+                }
+            }
+        }
+    }
+    else {
+        for (int i = 0; i < Graph.rows(); i++)
+        {
+            for (int j = i + 1; j < Graph.cols(); j++)
+            {
+                if (Graph(i, j))
+                {
+                    MATRIX(g_mat, i, j) = Graph(i, j);
+                    MATRIX(g_mat, j, i) = MATRIX(g_mat, i, j);
+                }
+            }
+        }
+    }
+
+    igraph_set_attribute_table(&igraph_cattribute_table);
+    igraph_vector_t weight;
+    igraph_vector_init(&weight, 0);
+    igraph_weighted_adjacency(&g, &g_mat, IGRAPH_ADJ_UNDIRECTED, &weight, IGRAPH_LOOPS_ONCE);
+
+
+    //找出所有最大团
+    igraph_vector_int_list_t cliques;
+    igraph_vector_int_list_init(&cliques, 0);
+    start = std::chrono::system_clock::now();
+
+    int min_clique_size = 3;
+    int max_clique_size = 0;
+    bool recomputecliques = true;
+    int clique_num = 0; //默认无上限
+    int iter_num = 1;
+
+    igraph_maximal_cliques(&g, &cliques, min_clique_size,  max_clique_size); //3dlomatch 3 3dmatch; 3 Kitti 4 (说明)
+    clique_num = igraph_vector_int_list_size(&cliques);
+    //控制搜索到的数量
+    //    while(recomputecliques){
+    //        igraph_maximal_cliques(&g, &cliques, min_clique_size,  max_clique_size); //3dlomatch 3 3dmatch; 3 Kitti 4 (说明)
+    //        clique_num = igraph_vector_int_list_size(&cliques);
+    //        if(clique_num > 10000000 && iter_num <= 5){
+    //            max_clique_size = 15;
+    //            min_clique_size +=iter_num;
+    //            iter_num++;
+    //            igraph_vector_int_list_destroy(&cliques);
+    //            igraph_vector_int_list_init(&cliques, 0);
+    //            cout << "clique number " << clique_num << " is too large! recomputing .." << endl;
+    //        }
+    //        else{
+    //            recomputecliques = false;
+    //        }
+    //    }
+
+    elapsed_time = end - start;
+    total_time += elapsed_time;
+
+    if (clique_num == 0) {
+        //若搜索不到团，提示无法配准
+        cout << " NO CLIQUES! " << endl;
+        return false;
+    }
+    cout << " clique computation: " << elapsed_time.count() << endl;
+
+    //数据清理
+    igraph_destroy(&g);
+    igraph_matrix_destroy(&g_mat);
+
+    vector<int>remain;
+    start = std::chrono::system_clock::now();
+    for (int i = 0; i < clique_num; i++)
+    {
+        remain.push_back(i);
+    }
+    node_cliques* N_C = new node_cliques[(int)total_num];
+    find_largest_clique_of_node(Graph, &cliques, correspondence, N_C, remain, total_num, max_est_num, descriptor);
+    end = std::chrono::system_clock::now();
+    elapsed_time = end - start;
+    total_time += elapsed_time;
+    cout << " clique selection: " << elapsed_time.count() << endl;
+    int total_estimate = remain.size();
+
+    PointCloudPtr src_corr_pts(new pcl::PointCloud<pcl::PointXYZ>);
+    PointCloudPtr des_corr_pts(new pcl::PointCloud<pcl::PointXYZ>);
+    for (size_t i = 0; i < correspondence.size(); i++)
+    {
+        src_corr_pts->push_back(correspondence[i].src);
+        des_corr_pts->push_back(correspondence[i].des);
+    }
+
+    /******************************************registraion***************************************************/
+    Eigen::Matrix4d best_est;
+    double inlier_thresh;
+    inlier_thresh = 10*resolution;
+    bool found = false;
+    double best_score = 0;
+    vector<Corre_3DMatch>selected;
+    vector<int>corre_index;
+    start = std::chrono::system_clock::now();
+#pragma omp parallel for
+    for (int i = 0; i < remain.size(); i++)
+    {
+        vector<Corre_3DMatch>Group;
+        vector<int>selected_index;
+        igraph_vector_int_t* v = igraph_vector_int_list_get_ptr(&cliques, remain[i]);
+        int group_size = igraph_vector_int_size(v);
+        for (int j = 0; j < group_size; j++)
+        {
+            Corre_3DMatch C = correspondence[VECTOR(*v)[j]];
+            Group.push_back(C);
+            selected_index.push_back(VECTOR(*v)[j]);
+        }
+        //igraph_vector_destroy(v);
+        Eigen::Matrix4d est_trans;
+        //evaluate cliques
+        double score = evaluation_trans(Group, correspondence, src_corr_pts, des_corr_pts, weight_thresh, est_trans, inlier_thresh, metric,resolution,
+                                        true);
+        //GT未知
+        if (score > 0)
+        {
+#pragma omp critical
+            {
+                if (best_score < score)
+                {
+                    best_score = score;
+                    best_est = est_trans;
+                    selected = Group;
+                    corre_index = selected_index;
+                }
+            }
+        }
+        Group.clear();
+        Group.shrink_to_fit();
+        selected_index.clear();
+        selected_index.shrink_to_fit();
+    }
+    end = std::chrono::system_clock::now();
+    elapsed_time = end - start;
+    total_time += elapsed_time;
+    cout << " hypothesis generation & evaluation: " << elapsed_time.count() << endl;
+    //释放内存空间
+    igraph_vector_int_list_destroy(&cliques);
+    cout <<  total_estimate << " : " << clique_num << endl;
+#endif
     Eigen::MatrixXd tmp_best;
 
     tmp_best = best_est;

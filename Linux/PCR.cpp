@@ -174,7 +174,7 @@ Eigen::MatrixXf Graph_construction(vector<Corre_3DMatch>& correspondence, float 
 	}
 	if (sc2)
 	{
-		//Eigen::setNbThreads(6);
+		Eigen::setNbThreads(6);
 		cmp_score = cmp_score.cwiseProduct(cmp_score * cmp_score);
 	}
 	return cmp_score;
@@ -206,7 +206,7 @@ Eigen::MatrixXf Graph_construction(vector<Corre_3DMatch>& correspondence, float 
     }
     if (sc2)
     {
-        //Eigen::setNbThreads(6);
+        Eigen::setNbThreads(6);
         cmp_score = cmp_score.cwiseProduct(cmp_score * cmp_score);
     }
     return cmp_score;
@@ -245,25 +245,6 @@ bool evaluation_est(Eigen::Matrix4d est, Eigen::Matrix4d gt, double re_thresh, d
 	return false;
 }
 
-void sort_row(MatD& matrix, MatD& sorted_matrix, Eigen::MatrixXi& index) {
-	sorted_matrix.resize(matrix.rows(), matrix.cols());
-	index.resize(matrix.rows(), matrix.cols());
-	for (int n = 0; n < matrix.rows(); n++)
-	{
-		VectorXi row_index = VectorXi::LinSpaced(matrix.cols(), 0, matrix.cols() - 1);
-		VectorXd row_data = matrix.row(n);
-		auto rule = [row_data](int i, int j)->bool {
-			return row_data(i) > row_data(j);
-		};
-		sort(row_index.data(), row_index.data() + row_index.size(), rule);
-
-		for (int i = 0; i < row_data.size(); i++)
-		{
-			sorted_matrix(n, i) = row_data(row_index(i));
-		}
-		index.row(n) = row_index;
-	}
-}
 
 void weight_SVD(PointCloudPtr& src_pts, PointCloudPtr& des_pts, Eigen::VectorXd& weights, double weight_threshold, Eigen::Matrix4d& trans_Mat) {
 	for (size_t i = 0; i < weights.size(); i++)
@@ -487,212 +468,6 @@ void eigenvector_centrality(Eigen::MatrixXd& Graph, Eigen::VectorXd& initial, Ei
 		eigenvector_next.setZero();
 	}
 	eigenvector /= max;
-}
-
-int print_vector(const igraph_vector_t* v) {
-	long int i, n = igraph_vector_size(v);
-	for (i = 0; i < n; i++) {
-		printf("%ld %.2g\n", i, (double)VECTOR(*v)[i]);
-	}
-	return 0;
-}
-
-void print_graph(igraph_t* g) {
-	igraph_vector_t el;
-	long int i, j, n;
-	char ch = igraph_is_directed(g) ? '>' : '-';
-
-	igraph_vector_init(&el, 0);
-	igraph_get_edgelist(g, &el, 0);
-	n = igraph_ecount(g);
-
-	for (i = 0, j = 0; i < n; i++, j += 2) {
-		printf("%ld --%c %ld: %ld\n",
-			(long)VECTOR(el)[j], ch, (long)VECTOR(el)[j + 1], (long)EAN(g, "weight", i));
-	}
-	printf("\n");
-
-	igraph_vector_destroy(&el);
-}
-
-int sort_cmp(const void* a, const void* b) {
-	const igraph_vector_t** da = (const igraph_vector_t**)a;
-	const igraph_vector_t** db = (const igraph_vector_t**)b;
-	int i, alen = igraph_vector_size(*da), blen = igraph_vector_size(*db);
-	if (alen != blen) {
-		return (alen < blen) - (alen > blen);
-	}
-	for (i = 0; i < alen; i++) {
-		int ea = VECTOR(**da)[i], eb = VECTOR(**db)[i];
-		if (ea != eb) {
-			return (ea > eb) - (ea < eb);
-		}
-	}
-	return 0;
-}
-
-void sort_cliques(igraph_vector_ptr_t* cliques) {
-	int i, n = igraph_vector_ptr_size(cliques);
-	for (i = 0; i < n; i++) {
-		igraph_vector_t* v = (igraph_vector_t*)VECTOR(*cliques)[i];
-		igraph_vector_sort(v);
-	}
-	igraph_qsort(VECTOR(*cliques), (size_t)n,
-		sizeof(igraph_vector_t*), sort_cmp);
-}
-
-void print_and_destroy_cliques(igraph_vector_ptr_t* cliques) {
-	int i;
-	sort_cliques(cliques);
-	for (i = 0; i < igraph_vector_ptr_size(cliques); i++) {
-		igraph_vector_t* v = (igraph_vector_t*)VECTOR(*cliques)[i];
-		igraph_vector_print(v);
-		igraph_vector_destroy(v);
-		igraph_free(v);
-	}
-}
-
-void find_largest_clique_of_node(Eigen::MatrixXf& Graph, igraph_vector_ptr_t* cliques, vector<Corre_3DMatch>& correspondence, node_cliques* result, vector<int>& remain, int num_node, int est_num, string descriptor) {
-	int* vis = new int[igraph_vector_ptr_size(cliques)];
-	memset(vis, 0, igraph_vector_ptr_size(cliques));
-#pragma omp parallel for
-	for (int i = 0; i < num_node; i++)
-	{
-		result[i].clique_index = -1;
-		result[i].clique_size = 0;
-		result[i].clique_weight = 0;
-		result[i].clique_num = 0;
-	}
-
-	for (int i = 0; i < remain.size(); i++)
-	{
-		igraph_vector_t* v = (igraph_vector_t*)VECTOR(*cliques)[remain[i]];
-		float weight = 0;
-		int length = igraph_vector_size(v);
-		for (int j = 0; j < length; j++)
-		{
-			int a = (int)VECTOR(*v)[j];
-			for (int k = j + 1; k < length; k++)
-			{
-				int b = (int)VECTOR(*v)[k];
-				weight += Graph(a, b);
-			}
-		}
-		for (int j = 0; j < length; j++)
-		{
-			int k = (int)VECTOR(*v)[j];
-			if (result[k].clique_weight < weight)
-			{
-				result[k].clique_index = remain[i];
-				vis[remain[i]]++;
-				result[k].clique_size = length;
-				result[k].clique_weight = weight;
-			}
-		}
-	}
-
-#pragma omp parallel for
-	for (int i = 0; i < remain.size(); i++)
-	{
-		if (vis[remain[i]] == 0) {
-			igraph_vector_t* v = (igraph_vector_t*)VECTOR(*cliques)[remain[i]];
-			igraph_vector_destroy(v);
-		}
-	}
-
-	vector<int>after_delete;
-	for (int i = 0; i < num_node; i++)
-	{
-		if (result[i].clique_index < 0)
-		{
-			continue;
-		}
-		if (vis[result[i].clique_index] > 0)
-		{
-			vis[result[i].clique_index] = 0;
-			after_delete.push_back(result[i].clique_index);
-		}
-		else if (vis[result[i].clique_index] == 0) {
-			result[i].clique_index = -1;
-		}
-	}
-	remain.clear();
-	remain = after_delete;
-
-	// Normal consistency
-//	vector<int>after_selection;
-//#pragma omp parallel for
-//	for (int i = 0; i < num_node; i++)
-//	{
-//		if (result[i].clique_index < 0)
-//		{
-//			continue;
-//		}
-//		igraph_vector_t* v = (igraph_vector_t*)VECTOR(*cliques)[result[i].clique_index];
-//		int length = igraph_vector_size(v);
-//		Eigen::VectorXi angle_cmp_vector;
-//		angle_cmp_vector.resize(length);
-//		angle_cmp_vector.setZero();
-//		for (int j = 0; j < length; j++)
-//		{
-//			int a = (int)VECTOR(*v)[j];
-//			for (int k = j + 1; k < length; k++) {
-//				int b = (int)VECTOR(*v)[k];
-//				float angle_src = getAngleTwoVectors(correspondence[a].src_norm, correspondence[b].src_norm);
-//				float angle_des = getAngleTwoVectors(correspondence[a].des_norm, correspondence[b].des_norm);
-//				float angle_cmp = abs(sin(angle_src) - sin(angle_des));
-//				if (angle_cmp < 0.1)
-//				{
-//					angle_cmp_vector[k]++;
-//					angle_cmp_vector[j]++;
-//				}
-//			}
-//		}
-//		int sum = angle_cmp_vector.sum();
-//#pragma omp critical
-//		{
-//			if (sum > length * (length - 1) / 2) //fpfh 0.1 fcgf0.05
-//			{
-//				after_selection.push_back(result[i].clique_index);
-//			}
-//			else
-//			{
-//				result[i].clique_index = -1;
-//				//igraph_vector_destroy(v);
-//			}
-//		}
-//	}
-//	remain.clear();
-//	remain = after_selection;
-//	after_selection.clear();
-
-	//reduce the number of cliques
-	if (remain.size() > est_num)
-	{
-		vector<int>after_decline;
-		vector<Vote>clique_score;
-		for (int i = 0; i < num_node; i++)
-		{
-			if (result[i].clique_index < 0)
-			{
-				continue;
-			}
-			Vote t;
-			t.index = result[i].clique_index;
-			t.score = result[i].clique_weight;
-			clique_score.push_back(t);
-		}
-		sort(clique_score.begin(), clique_score.end(), compare_vote_score);
-		for (int i = 0; i < est_num; i++)
-		{
-			after_decline.push_back(clique_score[i].index);
-		}
-		remain.clear();
-		remain = after_decline;
-        clique_score.clear();
-	}
-    delete[] vis;
-	return;
 }
 
 int Iter_trans_est(PointCloudPtr& cloud_source, PointCloudPtr& cloud_target, float& mr, float& inlier_thresh, vector<int>& Sample_cloud_Idx, float& residual_error, Eigen::Matrix4f& Mat)
