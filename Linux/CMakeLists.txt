@@ -3,7 +3,11 @@ project(MAC)
 
 set(CMAKE_CXX_STANDARD 14)
 find_package(PCL REQUIRED)
-find_package(igraph 0.9.9 REQUIRED)
+find_package(igraph 0.10.6 EXACT)
+if (NOT igraph_FOUND)
+    message("igraph version is lower than 0.10.6, memory issues will happen!")
+    find_package(igraph 0.9.9 EXACT)
+endif()
 FIND_PACKAGE( OpenMP REQUIRED)
 if(OPENMP_FOUND)
     message("OPENMP FOUND")
@@ -11,14 +15,7 @@ if(OPENMP_FOUND)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 endif()
 
-#include_directories(
-#        /opt/intel/oneapi/mkl/2023.0.0/include/
-#        include  #-------即/usr/local/include路径
-#)
 include_directories(${PCL_INCLUDE_DIRS})
-
-#link_directories(/opt/intel/oneapi/mkl/2023.0.0/lib/intel64
-#        )
 
 link_directories(${PCL_LIBRARY_DIRS})
 
