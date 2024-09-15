@@ -183,7 +183,6 @@ void find_largest_clique_of_node(Eigen::MatrixXf& Graph, igraph_vector_int_list_
     for (int i = 0; i < remain.size(); i++)
     {
         igraph_vector_int_t* v = igraph_vector_int_list_get_ptr(cliques, remain[i]);
-        //计算团的权重
         float weight = 0;
         int length = igraph_vector_int_size(v);
         for (int j = 0; j < length; j++)
@@ -235,7 +234,6 @@ void find_largest_clique_of_node(Eigen::MatrixXf& Graph, igraph_vector_int_list_
     }
     remain.clear();
     remain = after_delete;
-    //reduce the number of cliques（控制在 2000）
     if (remain.size() > est_num)
     {
         vector<int>after_decline;
@@ -1136,7 +1134,6 @@ bool registration(const string &name, string src_pointcloud, string des_pointclo
         igraph_weighted_adjacency(&g, &g_mat, IGRAPH_ADJ_UNDIRECTED, &weight, IGRAPH_LOOPS_ONCE);
 
 
-        //找出所有最大团
         igraph_vector_int_list_t cliques;
         igraph_vector_int_list_init(&cliques, 0);
         start = std::chrono::system_clock::now();
@@ -1150,11 +1147,11 @@ bool registration(const string &name, string src_pointcloud, string des_pointclo
         int clique_num = 0; //默认无上限
         int iter_num = 1;
 
-        igraph_maximal_cliques(&g, &cliques, min_clique_size,  max_clique_size); //3dlomatch 3 3dmatch; 3 Kitti 4 (说明)
+        igraph_maximal_cliques(&g, &cliques, min_clique_size,  max_clique_size); //3dlomatch 3 3dmatch; 3 Kitti 4
         clique_num = igraph_vector_int_list_size(&cliques);
         //控制搜索到的数量
     //    while(recomputecliques){
-    //        igraph_maximal_cliques(&g, &cliques, min_clique_size,  max_clique_size); //3dlomatch 3 3dmatch; 3 Kitti 4 (说明)
+    //        igraph_maximal_cliques(&g, &cliques, min_clique_size,  max_clique_size); //3dlomatch 3 3dmatch; 3 Kitti 4
     //        clique_num = igraph_vector_int_list_size(&cliques);
     //        if(clique_num > 10000000 && iter_num <= 5){
     //            max_clique_size = 15;
@@ -1174,7 +1171,6 @@ bool registration(const string &name, string src_pointcloud, string des_pointclo
         total_time += elapsed_time;
 
         if (clique_num == 0) {
-            //若搜索不到团，提示无法配准
             cout << " NO CLIQUES! " << endl;
             return false;
         }
