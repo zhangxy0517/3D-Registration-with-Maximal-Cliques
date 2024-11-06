@@ -4,6 +4,7 @@ Source code of [3D Registration with Maximal Cliques](https://openaccess.thecvf.
 ## News
 - 2024-08-13 -> [TPAMI version of the paper](https://ieeexplore.ieee.org/abstract/document/10636064) is available!
 - 2024-09-15 -> igraph 0.9.9 has a memory leak issue. Support for version 0.10.6 has been added. Please refer to the Linux version for details.
+- 2024-11-6 -> Our new work ''MAC++: Going Further with Maximal Cliques for 3D Registration'' is accepted by 3DV 2025.
 
 ## Introduction  
 In this paper, we present a 3D registration method with maximal cliques (MAC). The key insight is to loosen the previous maximum clique constraint,
